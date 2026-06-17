@@ -24,7 +24,7 @@ const Cloud = (() => {
         if (u) {
           const doc = await db.collection("users").doc(u.uid).get();
           const d = doc.data() || {};
-          me = { uid: u.uid, username: d.username || u.email.split("@")[0], name: d.name || d.username || "Rider" };
+          me = { uid: u.uid, username: d.username || u.email.split("@")[0], name: d.name || d.username || "Rider", photo: d.photo || "" };
         } else me = null;
         authSubs.forEach((fn) => fn(me));
       });
@@ -73,6 +73,21 @@ const Cloud = (() => {
     return doc.exists ? doc.data().uid : null;
   }
 
+  // Prefix search of the user directory by username (for adding members).
+  async function searchUsers(prefix) {
+    prefix = (prefix || "").trim().toLowerCase();
+    if (prefix.length < 2) return [];
+    const snap = await db.collection("users")
+      .orderBy("username").startAt(prefix).endAt(prefix + String.fromCharCode(0xf8ff)).limit(8).get();
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => u.uid !== me.uid);
+  }
+
+  // Set the signed-in user's profile photo (Cloudinary URL).
+  async function setPhoto(url) {
+    await db.collection("users").doc(me.uid).update({ photo: url });
+    if (me) me.photo = url;
+  }
+
   /* ---- groups (realtime) ---- */
   function watchGroups(cb) {
     return db.collection("groups").where("memberUids", "array-contains", me.uid)
@@ -101,7 +116,7 @@ const Cloud = (() => {
     if (!uid) throw new Error("No user with that username");
     const u = (await db.collection("users").doc(uid).get()).data() || {};
     await db.collection("groups").doc(gid).collection("members").doc(uid)
-      .set({ username: u.username || username, name: u.name || username, role });
+      .set({ username: u.username || username, name: u.name || username, role, photo: u.photo || "" });
     await db.collection("groups").doc(gid).update({ memberUids: firebase.firestore.FieldValue.arrayUnion(uid) });
   }
   const setRole = (gid, uid, role) => db.collection("groups").doc(gid).collection("members").doc(uid).update({ role });
@@ -115,20 +130,21 @@ const Cloud = (() => {
       fromUid: me.uid, fromName: me.name, ts: firebase.firestore.FieldValue.serverTimestamp(), ...msg,
     });
   }
-  // Voice/media storage via Cloudinary unsigned upload (returns a hosted URL).
-  async function uploadVoice(gid, blob) {
-    const cfg = window.CYCLESCREEN_CLOUDINARY || {};
-    if (!cfg.cloudName || !cfg.uploadPreset) throw new Error("Cloudinary not configured");
+  // Generic Cloudinary unsigned upload (returns a hosted URL). resourceType is
+  // "video" for audio/video, "image" for photos.
+  async function cloudinaryUpload(file, resourceType, folder) {
+    const cc = window.CYCLESCREEN_CLOUDINARY || {};
+    if (!cc.cloudName || !cc.uploadPreset) throw new Error("Cloudinary not configured");
     const form = new FormData();
-    form.append("file", blob);
-    form.append("upload_preset", cfg.uploadPreset);
-    form.append("folder", `cyclescreen/voice/${gid}`);
-    // audio uploads use Cloudinary's "video" (a/v) resource type
-    const r = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/video/upload`, { method: "POST", body: form });
+    form.append("file", file);
+    form.append("upload_preset", cc.uploadPreset);
+    if (folder) form.append("folder", folder);
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${cc.cloudName}/${resourceType}/upload`, { method: "POST", body: form });
     if (!r.ok) throw new Error("Cloudinary upload failed");
-    const j = await r.json();
-    return j.secure_url;
+    return (await r.json()).secure_url;
   }
+  const uploadVoice = (gid, blob) => cloudinaryUpload(blob, "video", `cyclescreen/voice/${gid}`);
+  const uploadImage = (file) => cloudinaryUpload(file, "image", "cyclescreen/avatars");
 
   function createChallenge(gid, c) {
     return db.collection("groups").doc(gid).collection("challenges").add({
@@ -145,8 +161,8 @@ const Cloud = (() => {
   }
 
   return {
-    enabled, init, onAuth, user, signUp, signIn, signOut,
-    watchGroups, watchGroup, watchSub, createGroup,
+    enabled, init, onAuth, user, signUp, signIn, signOut, searchUsers, setPhoto,
+    watchGroups, watchGroup, watchSub, createGroup, uploadImage,
     addMember, setRole, removeMember, sendMessage, uploadVoice, createChallenge, toggleJoin,
   };
 })();

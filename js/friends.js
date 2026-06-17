@@ -134,7 +134,7 @@ const Friends = (() => {
     const manage = canManage(g);
     body.innerHTML = `<div class="list">${g.members.map((m) => `
         <div class="list-row member-row" data-id="${m.id}">
-          <div class="avatar" style="width:40px;height:40px;font-size:14px;background:${colorFor(m.id)}">${ini(m.name)}</div>
+          <div class="avatar" style="width:40px;height:40px;font-size:14px;background:${colorFor(m.id)}">${m.photo ? `<img src="${esc(m.photo)}" alt="">` : ini(m.name)}</div>
           <div class="lr-main"><div class="lr-title">${esc(m.name)}${m.id === GD.me().id ? ' (you)' : ''}</div><div class="lr-sub">@${esc(m.username)}</div></div>
           <div class="lr-trail"><span class="role-badge role-${m.role.toLowerCase()}">${m.role}</span></div></div>`).join('')}</div>
       ${manage ? `<button class="btn btn--block btn--pill" id="add-member" style="margin-top:14px">＋ Add Member</button>`
@@ -147,15 +147,40 @@ const Friends = (() => {
 
   function addMemberSheet(g) {
     App.sheet('Add Member', `
-      ${cloud() ? '' : '<p style="font-size:12px;color:var(--text-2);margin:0 4px 10px">Local mode: adds a roster entry. Sign in to add real users by username.</p>'}
-      <div class="onb-user-wrap"><span class="at">@</span><input class="field" id="m-user" placeholder="username" style="padding-left:30px"></div>
+      ${cloud() ? '<p style="font-size:12px;color:var(--text-2);margin:0 4px 10px">Search riders by username.</p>'
+                : '<p style="font-size:12px;color:var(--text-2);margin:0 4px 10px">Local mode: adds a roster entry. Sign in to add real users by username.</p>'}
+      <div class="onb-user-wrap"><span class="at">@</span><input class="field" id="m-user" placeholder="username" autocapitalize="none" style="padding-left:30px"></div>
+      <div class="user-results" id="m-results"></div>
       <div style="font-size:12px;color:var(--text-2);margin:6px 4px 6px">Role</div>
       <div class="segmented" id="m-role">${['Admin','Member','Viewer'].map((r,i)=>`<button data-r="${r}" class="${i===1?'on':''}">${r}</button>`).join('')}</div>
       <button class="btn btn--block" id="m-go" style="margin-top:12px">Add to Group</button>`, (root, close) => {
       let role = 'Member';
       root.querySelectorAll('#m-role button').forEach((b) => b.onclick = () => { role = b.dataset.r; root.querySelectorAll('#m-role button').forEach((x) => x.classList.toggle('on', x === b)); });
+      const input = root.querySelector('#m-user'), results = root.querySelector('#m-results');
+
+      if (cloud()) {
+        let t;
+        const existing = new Set((g.members || []).map((m) => m.username));
+        input.oninput = () => {
+          clearTimeout(t);
+          const q = input.value.trim().replace(/^@/, '').toLowerCase();
+          t = setTimeout(async () => {
+            if (q.length < 2) { results.innerHTML = ''; return; }
+            let users = [];
+            try { users = await Cloud.searchUsers(q); } catch {}
+            users = users.filter((u) => !existing.has(u.username));
+            results.innerHTML = users.length ? users.map((u) => `
+              <button class="user-result" data-u="${esc(u.username)}">
+                <div class="avatar" style="width:32px;height:32px;font-size:12px;background:${colorFor(u.uid)}">${u.photo ? `<img src="${esc(u.photo)}" alt="">` : ini(u.name || u.username)}</div>
+                <div class="lr-main"><div class="lr-title" style="font-size:14px">${esc(u.name || u.username)}</div><div class="lr-sub">@${esc(u.username)}</div></div>
+              </button>`).join('') : '<div class="empty" style="padding:10px;font-size:12px">No matching riders</div>';
+            results.querySelectorAll('.user-result').forEach((b) => b.onclick = () => { input.value = b.dataset.u; results.innerHTML = ''; });
+          }, 250);
+        };
+      }
+
       root.querySelector('#m-go').onclick = async () => {
-        const username = root.querySelector('#m-user').value.trim().replace(/^@/, '').toLowerCase();
+        const username = input.value.trim().replace(/^@/, '').toLowerCase();
         if (!username) return App.toast('Enter a username');
         try { await GD.addMember(g.id, username, role); close(); refresh(); }
         catch (e) { App.toast(e.message || 'Could not add'); }

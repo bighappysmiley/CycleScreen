@@ -50,13 +50,17 @@ const Onboarding = (() => {
   /* ---- 2a. Real account (Firebase username + password) ---- */
   function authScreen(mode) {
     const signup = mode === 'signup';
+    let photoFile = null;
     step(`
-      <div class="onb-logo sm">🚴</div>
-      <h1 class="onb-title">${signup ? 'Create account' : 'Sign in'}</h1>
-      <p class="onb-sub">${signup ? 'Pick a unique username' : 'Welcome back'}</p>
+      <div class="onb-brand"><div class="onb-mark">🚴</div><span>CycleScreen</span></div>
+      <h1 class="onb-title">${signup ? 'Create account' : 'Welcome back'}</h1>
+      <p class="onb-sub">${signup ? 'Your username is unique to you' : 'Sign in to sync your groups'}</p>
       <div class="onb-form">
-        ${signup ? `<input class="field" id="au-name" placeholder="${I18n.t('your_name')}" autocomplete="off" />` : ''}
-        <div class="onb-user-wrap"><span class="at">@</span><input class="field" id="au-user" placeholder="${I18n.t('username')}" autocomplete="off" style="padding-left:30px"></div>
+        ${signup ? `
+          <button class="onb-avatar" id="au-avatar" type="button"><span id="au-avatar-in">＋</span></button>
+          <input type="file" id="au-photo" accept="image/*" hidden />
+          <input class="field" id="au-name" placeholder="${I18n.t('your_name')}" autocomplete="off" />` : ''}
+        <div class="onb-user-wrap"><span class="at">@</span><input class="field" id="au-user" placeholder="${I18n.t('username')}" autocomplete="off" autocapitalize="none" style="padding-left:30px"></div>
         <input class="field" id="au-pass" type="password" placeholder="Password" autocomplete="${signup ? 'new-password' : 'current-password'}" />
       </div>
       <div class="onb-err" id="au-err" hidden></div>
@@ -64,6 +68,16 @@ const Onboarding = (() => {
       <button class="onb-back" id="au-toggle">${signup ? 'Have an account? Sign in' : 'New here? Create an account'}</button>`);
 
     const err = (m) => { const e = root.querySelector('#au-err'); e.hidden = !m; e.textContent = m || ''; };
+
+    if (signup) {
+      const av = root.querySelector('#au-avatar'), file = root.querySelector('#au-photo');
+      av.onclick = () => file.click();
+      file.onchange = () => {
+        photoFile = file.files[0]; if (!photoFile) return;
+        av.classList.add('has'); root.querySelector('#au-avatar-in').innerHTML = `<img src="${URL.createObjectURL(photoFile)}" alt="">`;
+      };
+    }
+
     root.querySelector('#au-toggle').onclick = () => authScreen(signup ? 'signin' : 'signup');
     root.querySelector('#au-go').onclick = async () => {
       const username = (root.querySelector('#au-user').value || '').trim().replace(/^@/, '').toLowerCase();
@@ -71,10 +85,12 @@ const Onboarding = (() => {
       const name = signup ? (root.querySelector('#au-name').value.trim() || username) : username;
       const btn = root.querySelector('#au-go'); btn.disabled = true; btn.textContent = 'Please wait…'; err('');
       try {
-        if (signup) await Cloud.signUp({ username, name, password });
-        else await Cloud.signIn({ username, password });
-        // local profile mirrors the account for display; auth state drives the rest
-        Store.update((d) => { d.profile.name = name; d.profile.username = username; d.profile.initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(); d.onboarded = true; });
+        if (signup) {
+          await Cloud.signUp({ username, name, password });
+          if (photoFile) { try { const url = await Cloud.uploadImage(photoFile); await Cloud.setPhoto(url); Store.set('profile.photo', url); } catch {} }
+        } else await Cloud.signIn({ username, password });
+        const u = Cloud.user();
+        Store.update((d) => { d.profile.name = (u && u.name) || name; d.profile.username = (u && u.username) || username; d.profile.initials = ((u && u.name) || name).split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(); if (u && u.photo) d.profile.photo = u.photo; d.onboarded = true; });
         finish();
       } catch (e) { btn.disabled = false; btn.textContent = signup ? 'Create account' : 'Sign in'; err(e.message || 'Failed'); }
     };

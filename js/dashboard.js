@@ -8,7 +8,7 @@ const Dashboard = (() => {
   function refresh() {
     const p = Store.get('profile');
     document.getElementById('rail-name').textContent = p.name;
-    document.getElementById('rail-avatar').textContent = p.initials;
+    document.getElementById('rail-avatar').innerHTML = p.photo ? `<img src="${p.photo}" alt="">` : (p.initials || '');
     const unit = p.units === 'imperial' ? 'mph' : 'km/h';
     document.getElementById('rail-speed-unit').textContent = unit;
     document.getElementById('ov-speed-unit').textContent = unit.toUpperCase();

@@ -8,7 +8,8 @@ const Settings = (() => {
     const sec = Store.get('security');
     host.innerHTML = `<div class="settings-pad">
       <div class="profile-head">
-        <div class="avatar">${p.initials}</div>
+        <button class="avatar avatar-edit" id="pf-avatar" title="Change photo">${p.photo ? `<img src="${p.photo}" alt="">` : (p.initials || '👤')}<span class="avatar-cam">📷</span></button>
+        <input type="file" id="pf-photo" accept="image/*" hidden />
         <div class="pname">${p.name}</div>
         <div class="puser">@${p.username}</div>
       </div>
@@ -121,6 +122,21 @@ const Settings = (() => {
     unitsSeg.querySelectorAll('button').forEach((b) => b.onclick = () => { Store.set('profile.units', b.dataset.v); paintSeg(unitsSeg, b.dataset.v); Dashboard.refresh(); });
 
     // profile edits
+    // profile photo (Cloudinary)
+    const avBtn = host.querySelector('#pf-avatar'), photoIn = host.querySelector('#pf-photo');
+    avBtn.onclick = () => photoIn.click();
+    photoIn.onchange = async () => {
+      const f = photoIn.files[0]; if (!f) return;
+      if (!(window.CYCLESCREEN_CLOUDINARY || {}).cloudName) return App.toast('Set up Cloudinary to upload photos');
+      App.toast('Uploading photo…');
+      try {
+        const url = await Cloud.uploadImage(f);
+        Store.set('profile.photo', url);
+        if (Cloud.enabled && Cloud.user()) await Cloud.setPhoto(url);
+        Dashboard.refresh(); render(host);
+      } catch (e) { App.toast('Photo upload failed'); }
+    };
+
     host.querySelector('#edit-name').onclick = () => editField('Name', 'name', () => render(host));
     host.querySelector('#edit-user').onclick = () => editField('Username', 'username', () => render(host));
 

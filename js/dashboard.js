@@ -75,7 +75,7 @@ const Dashboard = (() => {
     el.addEventListener('mouseleave', cancel);
   }
 
-  function callContact(d) { Device.dial(d); App.callOverlay(d, Device.state.btConnected); }
+  function callContact(d) { Device.dial(d); App.callOverlay(d); }
 
   /* ---- Speed (rail + gauge) ---- */
   function paintSpeed(kmh) {

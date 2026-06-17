@@ -50,54 +50,37 @@ const Music = (() => {
 
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-  /* ----- full-screen player UI ----- */
+  /* ----- 24six: load the real service (no public API → embed + launch) ----- */
+  const URL_24SIX = 'https://24six.app';
   function render(host) {
-    const t = cur();
     host.innerHTML = `
-      <div class="music-hero">
-        <div class="music-art ${playing ? 'spin' : ''}" id="mart">${t.art}</div>
-        <div class="music-meta">
-          <div class="music-brand">24SIX • NOW PLAYING</div>
-          <div class="music-track-title" id="mtitle">${t.title}</div>
-          <div class="music-track-artist" id="martist">${t.artist}</div>
+      <div class="t24-wrap">
+        <div class="t24-bar">
+          <div class="music-brand" style="margin:0">24SIX MUSIC</div>
+          <a class="btn btn--pill" id="t24-open" href="${URL_24SIX}" target="_blank" rel="noopener">Open 24six ↗</a>
         </div>
-      </div>
-      <div class="music-progress" id="mprog"><div class="fill" id="mfill"></div></div>
-      <div class="music-times"><span id="mcur">0:00</span><span id="mdur">${fmt(t.dur)}</span></div>
-      <div class="music-controls">
-        <button id="mshuffle" class="${Store.get('music.shuffle') ? 'on' : ''}" title="Shuffle">
-          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7M21 16v5h-5M14 14l7 7M3 3l7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button id="mprev"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5"  stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
-        <button id="mplay" class="music-play"></button>
-        <button id="mnext"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
-        <button id="mrepeat" class="${Store.get('music.repeat') ? 'on' : ''}" title="Repeat">
-          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-      <div class="app-pad">
-        <div class="list-section-title">Up Next on 24six</div>
-        <div class="list" id="mlist"></div>
+        <iframe class="t24-frame" id="t24-frame" src="${URL_24SIX}"
+                allow="autoplay; encrypted-media; microphone; clipboard-write"
+                referrerpolicy="no-referrer"></iframe>
+        <div class="t24-fallback" id="t24-fallback" hidden>
+          <div style="font-size:48px">🎵</div>
+          <h3 style="margin:6px 0">Open 24six</h3>
+          <p style="color:var(--text-2);max-width:320px;margin:0 auto 14px">
+            24six is a closed app with no embeddable web player, so it can't run inside CycleScreen.
+            Tap below to open the real 24six.</p>
+          <a class="btn btn--pill" href="${URL_24SIX}" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">Open 24six ↗</a>
+        </div>
       </div>`;
 
-    const list = host.querySelector('#mlist');
-    list.innerHTML = catalog.map((s, i) => `
-      <div class="list-row playlist-row ${i === idx ? 'playing' : ''}" data-i="${i}">
-        <div class="lr-icon">${i === idx && playing ? '♪' : i + 1}</div>
-        <div class="lr-main"><div class="lr-title">${s.title}</div><div class="lr-sub">${s.artist}</div></div>
-        <div class="lr-trail">${fmt(s.dur)}</div>
-      </div>`).join('');
-    list.querySelectorAll('.playlist-row').forEach((r) => r.onclick = () => { play(+r.dataset.i); render(host); });
+    const frame = host.querySelector('#t24-frame');
+    let loaded = false;
+    frame.addEventListener('load', () => { loaded = true; });
+    // Most streaming apps block framing (X-Frame-Options/CSP); if it doesn't
+    // appear, fall back to the guaranteed launch button.
+    setTimeout(() => { if (!loaded) { frame.style.display = 'none'; host.querySelector('#t24-fallback').hidden = false; } }, 4500);
 
-    host.querySelector('#mplay').onclick = () => { toggle(); paintPlay(host); };
-    host.querySelector('#mnext').onclick = () => { next(); render(host); };
-    host.querySelector('#mprev').onclick = () => { prev(); render(host); };
-    host.querySelector('#mshuffle').onclick = (e) => { Store.set('music.shuffle', !Store.get('music.shuffle')); e.currentTarget.classList.toggle('on'); };
-    host.querySelector('#mrepeat').onclick = (e) => { Store.set('music.repeat', !Store.get('music.repeat')); e.currentTarget.classList.toggle('on'); };
-    host.querySelector('#mprog').onclick = (e) => { const b = e.currentTarget.getBoundingClientRect(); seek((e.clientX - b.left) / b.width); paintProgress(host); };
-    paintPlay(host); paintProgress(host);
-
-    music._host = host;
+    // launching the real app from a kiosk: open in a new window/tab
+    host.querySelector('#t24-open').onclick = (e) => { e.preventDefault(); window.open(URL_24SIX, '_blank', 'noopener'); };
   }
 
   function paintPlay(host) {

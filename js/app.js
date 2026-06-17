@@ -127,18 +127,26 @@ const App = (() => {
   }
 
   /* ---- call overlay (uses phone Bluetooth HFP) ---- */
-  function callOverlay(contact, connected) {
+  function callOverlay(contact) {
+    const tel = (contact.phone || '').replace(/[^\d+]/g, '');
     const body = `
       <div style="text-align:center;padding:6px 0 4px">
         <div class="avatar" style="width:84px;height:84px;font-size:30px;margin:0 auto 12px;background:${contact.color}">${contact.initials}</div>
         <div style="font-size:22px;font-weight:700">${contact.name}</div>
-        <div style="color:var(--text-2);margin-top:2px">${contact.phone || ''}</div>
-        <div style="color:${connected?'var(--accent-2)':'var(--warn)'};font-size:13px;margin-top:8px;font-weight:600">
-          ${connected ? '📞 Calling via phone Bluetooth…' : '⚠️ Connect your phone in Settings → Bluetooth'}</div>
+        <div style="color:var(--text-2);margin-top:2px">${contact.phone || 'No number set'}</div>
+        <div style="color:var(--text-2);font-size:12px;margin-top:8px">Dials through the connected phone / cellular handler</div>
       </div>
-      <button class="btn btn--block btn--danger btn--pill" id="endcall" style="margin-top:14px">End</button>`;
-    const close = sheet('Quick Dial', body, (root, c) => { root.querySelector('#endcall').onclick = c; });
-    if (connected) setTimeout(close, 3500);
+      <div style="display:flex;gap:10px;margin-top:14px">
+        ${tel ? `<a class="btn btn--block btn--pill" href="tel:${tel}" id="docall" style="background:var(--accent-2)">📞 Call</a>` : ''}
+        <button class="btn btn--block btn--pill btn--ghost" id="endcall">Close</button>
+      </div>`;
+    const close = sheet('Quick Dial', body, (root, c) => {
+      root.querySelector('#endcall').onclick = c;
+      const a = root.querySelector('#docall');
+      if (a) a.onclick = () => { setTimeout(c, 600); }; // let the tel: handler take over, then close
+    });
+    // also fire the tel: handoff immediately so a single tap places the call
+    if (tel) { try { window.location.href = 'tel:' + tel; } catch (e) {} }
   }
 
   function weatherSheet() {

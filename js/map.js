@@ -26,6 +26,20 @@ const MapView = (() => {
     map.on('dragstart', () => { follow = false; });
     marker.on('click', () => { follow = true; recenter(); });
 
+    // long-press (or right-click) to drop your location pin — works even when
+    // GPS is wrong and the place-search geocoder is blocked by a filter.
+    map.on('contextmenu', (e) => {
+      const { lat, lng } = e.latlng;
+      App.sheet('Set your location here?', `
+        <p style="font-size:13px;color:var(--text-2);margin:0 0 12px">${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+        <button class="btn btn--block" id="loc-here">Pin my location here</button>`, (root, close) => {
+        root.querySelector('#loc-here').onclick = () => {
+          Device.setManualLocation(lat, lng, 'Pinned location');
+          recenter(); close(); App.toast('📍 Location set');
+        };
+      });
+    });
+
     ready = true;
     Device.on('gps', onGPS);
     onGPS(Device.state);

@@ -67,6 +67,21 @@ export default async (request: Request) => {
     rh.set("location", nl);
   }
 
+  // If 24six hardcodes absolute https://24six.app URLs in its HTML/JS/JSON, those
+  // calls bypass the proxy (and break the session → 419). Rewrite them to
+  // same-origin so they route back through here.
+  const ct = (up.headers.get("content-type") || "").toLowerCase();
+  const isText = /text\/html|javascript|application\/json|text\/css|application\/xml/.test(ct);
+  if (isText) {
+    let body = await up.text();
+    body = body
+      .replaceAll("https://24six.app", "")
+      .replaceAll("http://24six.app", "")
+      .replaceAll("https:\\/\\/24six.app", "") // escaped in JSON / JS string literals
+      .replaceAll("http:\\/\\/24six.app", "");
+    return new Response(body, { status: up.status, headers: rh });
+  }
+
   return new Response(up.body, { status: up.status, headers: rh });
 };
 

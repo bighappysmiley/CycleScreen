@@ -50,37 +50,32 @@ const Music = (() => {
 
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-  /* ----- 24six: load the real service (no public API → embed + launch) ----- */
-  const URL_24SIX = 'https://24six.app';
+  /* ----- 24six: rendered IN-KIOSK via the /24six reverse proxy ----- */
+  // The proxy (netlify/edge-functions/proxy-24six.ts) strips 24six's framing
+  // headers so it loads inside CycleScreen. The app screen's top bar keeps a
+  // Back button, so the rider never gets stranded — no new tab is opened.
+  const PROXY_24SIX = '/24six/';
+  const DIRECT_24SIX = 'https://24six.app';
   function render(host) {
     host.innerHTML = `
       <div class="t24-wrap">
-        <div class="t24-bar">
-          <div class="music-brand" style="margin:0">24SIX MUSIC</div>
-          <a class="btn btn--pill" id="t24-open" href="${URL_24SIX}" target="_blank" rel="noopener">Open 24six ↗</a>
-        </div>
-        <iframe class="t24-frame" id="t24-frame" src="${URL_24SIX}"
-                allow="autoplay; encrypted-media; microphone; clipboard-write"
-                referrerpolicy="no-referrer"></iframe>
+        <iframe class="t24-frame" id="t24-frame" src="${PROXY_24SIX}"
+                allow="autoplay; encrypted-media; microphone; clipboard-write; fullscreen"></iframe>
         <div class="t24-fallback" id="t24-fallback" hidden>
           <div style="font-size:48px">🎵</div>
-          <h3 style="margin:6px 0">Open 24six</h3>
-          <p style="color:var(--text-2);max-width:320px;margin:0 auto 14px">
-            24six is a closed app with no embeddable web player, so it can't run inside CycleScreen.
-            Tap below to open the real 24six.</p>
-          <a class="btn btn--pill" href="${URL_24SIX}" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">Open 24six ↗</a>
+          <h3 style="margin:6px 0">24six couldn't load in-frame</h3>
+          <p style="color:var(--text-2);max-width:340px;margin:0 auto 14px">
+            The proxy reached 24six but it isn't rendering. Tap retry, or use the
+            Back button (top-left) to return to CycleScreen.</p>
+          <button class="btn btn--pill" id="t24-retry" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">Retry</button>
         </div>
       </div>`;
 
     const frame = host.querySelector('#t24-frame');
     let loaded = false;
-    frame.addEventListener('load', () => { loaded = true; });
-    // Most streaming apps block framing (X-Frame-Options/CSP); if it doesn't
-    // appear, fall back to the guaranteed launch button.
-    setTimeout(() => { if (!loaded) { frame.style.display = 'none'; host.querySelector('#t24-fallback').hidden = false; } }, 4500);
-
-    // launching the real app from a kiosk: open in a new window/tab
-    host.querySelector('#t24-open').onclick = (e) => { e.preventDefault(); window.open(URL_24SIX, '_blank', 'noopener'); };
+    frame.addEventListener('load', () => { loaded = true; host.querySelector('#t24-fallback').hidden = true; frame.style.display = ''; });
+    setTimeout(() => { if (!loaded) { frame.style.display = 'none'; host.querySelector('#t24-fallback').hidden = false; } }, 6000);
+    host.querySelector('#t24-retry').onclick = () => render(host);
   }
 
   function paintPlay(host) {

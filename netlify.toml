@@ -3,7 +3,16 @@
   publish = "."
   command = ""
 
-# SPA-style fallback so any path loads the app shell
+# Reverse-proxy 24six so it can be embedded in the kiosk (strips framing headers)
+[[edge_functions]]
+  path = "/24six"
+  function = "proxy-24six"
+[[edge_functions]]
+  path = "/24six/*"
+  function = "proxy-24six"
+
+# SPA-style fallback so any path loads the app shell.
+# (Edge functions above intercept /24six/* before this catch-all.)
 [[redirects]]
   from = "/*"
   to = "/index.html"

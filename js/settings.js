@@ -23,6 +23,9 @@ const Settings = (() => {
           <div class="lr-main"><div class="lr-title">Accent Color</div>
             <div class="swatch-row" id="swatches">${accents.map((c) => `<button class="swatch" data-c="${c}" style="background:${c}"></button>`).join('')}</div>
           </div></div>
+        <div class="list-row" id="lang-row"><div class="lr-icon" style="background:#34c759">🌐</div>
+          <div class="lr-main"><div class="lr-title">Language</div></div>
+          <div class="lr-trail">${I18n.meta().flag} ${I18n.meta().native} ›</div></div>
       </div>
 
       <div class="list-section-title">Profile</div>
@@ -106,6 +109,17 @@ const Settings = (() => {
 
     host.querySelector('#dial-edit').onclick = () => dialSheet(() => render(host));
 
+    host.querySelector('#lang-row').onclick = () => {
+      App.sheet('Language', `<div class="onb-langs" style="max-height:50vh">
+        ${I18n.LANGS.map((l) => `<button class="onb-lang ${l.code === I18n.current() ? 'sel' : ''}" data-c="${l.code}">
+          <span class="flag">${l.flag}</span><span class="lg"><b>${l.native}</b><small>${l.label}</small></span><span class="tick">✓</span></button>`).join('')}
+      </div>`, (root, close) => {
+        root.querySelectorAll('.onb-lang').forEach((b) => b.onclick = () => {
+          I18n.set(b.dataset.c); close(); Dashboard.refresh(); App.refreshDrawer(); render(host);
+        });
+      });
+    };
+
     // parental
     host.querySelector('#par-en').onchange = (e) => Store.set('parental.enabled', e.target.checked);
     host.querySelector('#par-speed').onchange = (e) => Store.set('parental.maxSpeedAlert', +e.target.value || 30);
@@ -147,6 +161,27 @@ const Settings = (() => {
     });
   }
 
+  // Edit one quick-dial slot (used by the dashboard hold-to-edit gesture).
+  function editDial(i, after) {
+    const d = Store.get('quickDial')[i] || {};
+    App.sheet(`Quick Dial — Slot ${i + 1}`, `
+      <input class="field" id="qd-name" placeholder="Name" value="${d.name || ''}">
+      <input class="field" id="qd-phone" type="tel" placeholder="Phone number" value="${d.phone || ''}">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn--block" id="qd-save">Save</button>
+        ${d.name ? '<button class="btn btn--block btn--danger" id="qd-del" style="flex:0 0 90px">Remove</button>' : ''}
+      </div>`, (root, close) => {
+      root.querySelector('#qd-save').onclick = () => {
+        const name = root.querySelector('#qd-name').value.trim();
+        if (!name) return App.toast('Enter a name');
+        Store.update((s) => s.quickDial[i] = { name, phone: root.querySelector('#qd-phone').value.trim(), initials: name.slice(0, 1).toUpperCase(), color: ['#ff375f','#0a84ff','#30d158','#bf5af2'][i % 4] });
+        close(); Dashboard.refresh(); after && after();
+      };
+      const del = root.querySelector('#qd-del');
+      if (del) del.onclick = () => { Store.update((s) => s.quickDial[i] = null); close(); Dashboard.refresh(); after && after(); };
+    });
+  }
+
   function setPinSheet() {
     App.sheet('Set 4-digit PIN', `
       <input class="field" id="pin1" inputmode="numeric" maxlength="4" placeholder="New PIN">
@@ -160,5 +195,5 @@ const Settings = (() => {
     });
   }
 
-  return { render };
+  return { render, editDial };
 })();

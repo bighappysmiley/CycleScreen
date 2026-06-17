@@ -11,8 +11,11 @@ themes, and PIN-protected parental controls.
 
 ## Features
 
-- **Dashboard** — full-screen map with a live, auto-following rider marker and breadcrumb trail.
-- **Left rail** — your name + `@username`, large **speed** readout, **weather** (live, from your GPS location), and **4 quick-dial contacts** that call over your phone's Bluetooth.
+- **First-run onboarding** — Apple-style **language picker** (English, Español, Français, Deutsch, עברית, العربية) + a **login / create-profile** screen with an optional passcode.
+- **Dashboard** — full-screen map with a live, auto-following rider marker and breadcrumb trail, plus map overlays: a **clock + date** card, a **place search** bar (geocoded), and a large **speed gauge**.
+- **Current Ride tracker** — Start/End a ride with a live **timer**, **distance**, **average speed**, and **heart-rate (BPM)**.
+- **Bottom tab bar** — Home · Apps · Theme · Settings · Lock.
+- **Left rail** — your name + presence, large **speed** readout, **weather** (live, from your GPS location), and **quick-dial contacts** (tap to call over your phone's Bluetooth, **hold to edit**).
 - **App drawer** — springboard-style grid: 24six, Friends, Settings, Map, Weather, Fitness.
 - **24six music** — now-playing pill on the dashboard, full player with playlist, shuffle/repeat.
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.

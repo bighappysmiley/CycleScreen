@@ -2,7 +2,9 @@
 const Store = (() => {
   const KEY = 'cyclescreen.v1';
   const defaults = {
-    profile: { name: 'Or Frankel', username: 'orf', initials: 'OF', units: 'metric' },
+    profile: { name: 'Or Frankel', username: 'orf', initials: 'OF', units: 'imperial' },
+    onboarded: false,
+    language: 'en',
     theme: 'dark',
     accent: '#0a84ff',
     quickDial: [
@@ -23,6 +25,7 @@ const Store = (() => {
     ],
     parental: { enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false, curfewEnd: '' },
     music: { volume: 0.7, shuffle: false, repeat: false },
+    lastRide: null, // { date, distanceKm, durationSec, avgKmh }
   };
 
   let data = load();

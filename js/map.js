@@ -44,5 +44,15 @@ const MapView = (() => {
   function recenter() { if (ready) { follow = true; map.setView([Device.state.coords.lat, Device.state.coords.lng], 16, { animate: true }); } }
   function invalidate() { if (ready) setTimeout(() => map.invalidateSize(), 60); }
 
-  return { init, recenter, invalidate };
+  let searchMarker = null;
+  function goTo(lat, lng, label) {
+    if (!ready) return;
+    follow = false;
+    map.setView([lat, lng], 15, { animate: true });
+    if (searchMarker) searchMarker.remove();
+    searchMarker = L.marker([lat, lng]).addTo(map);
+    if (label) searchMarker.bindPopup(label).openPopup();
+  }
+
+  return { init, recenter, invalidate, goTo };
 })();

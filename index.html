@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/dashboard.css" />
   <link rel="stylesheet" href="css/apps.css" />
+  <link rel="stylesheet" href="css/onboarding.css" />
 </head>
 <body data-theme="dark">
   <!-- Status bar -->
@@ -41,17 +42,38 @@
     <!-- Dashboard -->
     <section class="screen screen--active" id="screen-dashboard">
       <div id="map" class="map"></div>
+
+      <!-- Map overlays -->
+      <div class="ov-clock glass" id="ov-clock">
+        <div class="ov-time" id="ov-time">--:--</div>
+        <div class="ov-date" id="ov-date">—</div>
+      </div>
+
+      <div class="ov-search glass" id="ov-search">
+        <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="ov-search-input" placeholder="Search places…" />
+        <button id="ov-search-clear" hidden>✕</button>
+      </div>
+
+      <button class="ov-speed glass" id="ov-speed" aria-label="Speed">
+        <div class="ov-speed-val" id="ov-speed-val">0</div>
+        <div class="ov-speed-unit" id="ov-speed-unit">MPH</div>
+      </button>
+
       <aside class="rail glass">
         <div class="rail-profile">
           <div class="avatar" id="rail-avatar">OF</div>
-          <div class="rail-name" id="rail-name">Or Frankel</div>
-          <div class="rail-username" id="rail-username">@orf</div>
+          <div class="rail-id">
+            <div class="rail-name" id="rail-name">Or Frankel</div>
+            <div class="rail-presence"><i class="dot"></i><span id="rail-presence-txt">Online</span></div>
+          </div>
+          <button class="rail-gear" id="rail-gear" aria-label="Settings">⚙︎</button>
         </div>
 
         <div class="rail-metrics">
           <div class="metric metric--speed">
-            <div class="metric-value"><span id="rail-speed">0</span><small id="rail-speed-unit">km/h</small></div>
-            <div class="metric-label">Speed</div>
+            <div class="metric-value"><span id="rail-speed">0</span><small id="rail-speed-unit">mph</small></div>
+            <div class="metric-label" id="lbl-speed">Speed</div>
           </div>
           <div class="metric metric--weather">
             <div class="metric-weather">
@@ -63,13 +85,30 @@
         </div>
 
         <div class="rail-dials">
-          <div class="rail-dials-title">Quick Dial</div>
-          <div class="dial-grid" id="dial-grid"><!-- populated --></div>
+          <div class="rail-dials-title"><span id="lbl-quickdial">Quick Dial</span> · <span id="lbl-holdedit" class="dim">hold to edit</span></div>
+          <div class="dial-list" id="dial-grid"><!-- populated --></div>
         </div>
 
-        <button class="rail-apps-btn" id="open-drawer" aria-label="Open apps">
-          <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
-        </button>
+        <!-- Current ride tracker -->
+        <div class="ride-card" id="ride-card">
+          <div class="ride-head" id="lbl-ride">Current Ride</div>
+          <div class="ride-timer" id="ride-timer">00:00:00</div>
+          <div class="ride-stats">
+            <div><b id="ride-dist">0.0</b><small id="lbl-dist">mi</small></div>
+            <div><b id="ride-avg">0.0</b><small id="lbl-avg">mph</small></div>
+            <div><b id="ride-bpm">--</b><small>bpm</small></div>
+          </div>
+          <button class="ride-btn" id="ride-btn">Start Ride</button>
+        </div>
+
+        <!-- Bottom tab bar -->
+        <nav class="tabbar" id="tabbar">
+          <button class="tab on" data-tab="home"><span class="ti">🏠</span><span id="tab-home">Home</span></button>
+          <button class="tab" data-tab="apps"><span class="ti">📱</span><span id="tab-apps">Apps</span></button>
+          <button class="tab" data-tab="theme"><span class="ti">🌙</span><span id="tab-theme">Theme</span></button>
+          <button class="tab" data-tab="settings"><span class="ti">⚙️</span><span id="tab-settings">Settings</span></button>
+          <button class="tab" data-tab="lock"><span class="ti">🔒</span><span id="tab-lock">Lock</span></button>
+        </nav>
       </aside>
 
       <!-- Mini now-playing pill -->
@@ -105,6 +144,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/device.js"></script>
   <script src="js/state.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/onboarding.js"></script>
   <script src="js/map.js"></script>
   <script src="js/music.js"></script>
   <script src="js/friends.js"></script>

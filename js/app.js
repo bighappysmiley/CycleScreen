@@ -170,13 +170,45 @@ const App = (() => {
     document.getElementById('now-pill').onclick = () => open('music');
 
     // nav wiring
-    document.getElementById('open-drawer').onclick = () => nav('drawer');
     document.querySelectorAll('[data-nav]').forEach((b) => b.onclick = () => nav(b.dataset.nav));
 
+    // bottom tab bar
+    document.querySelectorAll('#tabbar .tab').forEach((b) => b.onclick = () => {
+      const t = b.dataset.tab;
+      if (t === 'home') nav('dashboard');
+      else if (t === 'apps') nav('drawer');
+      else if (t === 'theme') setTheme(Store.get('theme') === 'dark' ? 'light' : 'dark');
+      else if (t === 'settings') open('settings');
+      else if (t === 'lock') lockNow();
+      setTab(t === 'theme' || t === 'lock' ? 'home' : t);
+    });
+  }
+
+  function setTab(t) {
+    document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  }
+
+  function lockNow() {
+    const par = Store.get('parental');
+    if (!par.pin) return App.toast('Set a passcode in Settings to enable lock');
+    Store.set('parental.enabled', true);
     maybeLock();
   }
 
-  return { init, nav, open, toast, sheet, setTheme, setAccent, callOverlay, refreshDrawer: renderDrawer };
+  function boot() {
+    // restore prefs + language before anything renders
+    setTheme(Store.get('theme'));
+    setAccent(Store.get('accent'));
+    I18n.set(Store.get('language') || 'en');
+    init();
+    if (!Store.get('onboarded')) {
+      Onboarding.start(() => { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); maybeLock(); });
+    } else {
+      maybeLock();
+    }
+  }
+
+  return { init, boot, nav, open, toast, sheet, setTheme, setAccent, callOverlay, refreshDrawer: renderDrawer, setTab };
 })();
 
-window.addEventListener('DOMContentLoaded', App.init);
+window.addEventListener('DOMContentLoaded', App.boot);

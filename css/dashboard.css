@@ -1,4 +1,6 @@
 /* ---------- Dashboard ---------- */
+/* keep the kiosk layout LTR even for RTL languages; text still localizes */
+#screens { direction: ltr; }
 #screen-dashboard { display: flex; }
 
 .map { position: absolute; inset: 0; left: 0; z-index: 1; background: #20242b; }
@@ -68,5 +70,83 @@
 .now-pill-eq i:nth-child(2){ animation-delay:.2s } .now-pill-eq i:nth-child(3){ animation-delay:.4s }
 @keyframes eq { 0%,100%{height:5px} 50%{height:15px} }
 
+/* ---- Map overlays ---- */
+.ov-clock {
+  position: absolute; z-index: 15; top: calc(var(--status-h) + 8px); left: calc(var(--rail-w) + 14px);
+  border-radius: var(--radius-md); padding: 8px 14px; box-shadow: var(--shadow-2); color: var(--text);
+}
+.ov-time { font-size: 26px; font-weight: 700; letter-spacing: -.5px; color: var(--accent); line-height: 1; }
+.ov-date { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-2); margin-top: 3px; }
+
+.ov-search {
+  position: absolute; z-index: 15; top: calc(var(--status-h) + 8px); left: 50%; transform: translateX(-50%);
+  width: min(46%, 420px); display: flex; align-items: center; gap: 8px;
+  border-radius: 999px; padding: 9px 16px; box-shadow: var(--shadow-2); color: var(--text-2);
+}
+.ov-search input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14px; font-family: inherit; }
+.ov-search input::placeholder { color: var(--text-2); }
+.ov-search button { color: var(--text-2); font-size: 14px; }
+
+.ov-speed {
+  position: absolute; z-index: 15; top: calc(var(--status-h) + 8px); right: 14px;
+  width: 78px; height: 78px; border-radius: 22px; box-shadow: var(--shadow-2); color: var(--text);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+}
+.ov-speed-val { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -1px; color: var(--accent-2); }
+.ov-speed-unit { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--text-2); }
+.ov-speed.fast .ov-speed-val { color: var(--warn); }
+
+/* ---- Rail profile (avatar + id + gear) ---- */
+.rail-profile { flex-direction: row; align-items: center; gap: 10px; }
+.rail-profile .avatar { width: 44px; height: 44px; font-size: 16px; }
+.rail-id { flex: 1; min-width: 0; }
+.rail-name { font-size: 17px; margin-top: 0; }
+.rail-presence { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent-2); font-weight: 600; }
+.rail-presence .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); }
+.rail-gear { color: var(--text-2); font-size: 18px; padding: 4px; }
+
+/* ---- Quick dial as rows (hold to edit) ---- */
+.dial-list { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; }
+.dial-row {
+  display: flex; align-items: center; gap: 10px; background: var(--fill-2);
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm); padding: 7px 9px;
+  transition: transform .12s var(--ease-out), background .15s;
+}
+.dial-row:active { transform: scale(.97); }
+.dial-row .avatar { width: 34px; height: 34px; font-size: 13px; }
+.dial-row .dr-main { flex: 1; min-width: 0; }
+.dial-row .dr-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dial-row .dr-num { font-size: 10.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dial-row .dr-call { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-2); color: #fff; flex: 0 0 auto; }
+.dial-row.dial--empty { color: var(--text-3); border-style: dashed; }
+.dial-row.dial--empty .avatar { background: var(--fill); color: var(--text-3); }
+.dim { color: var(--text-3); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+/* ---- Current ride card ---- */
+.ride-card { background: var(--fill-2); border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 10px 12px; }
+.ride-head { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); }
+.ride-timer { font-size: 28px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; margin: 2px 0 6px; }
+.ride-stats { display: flex; justify-content: space-between; margin-bottom: 9px; }
+.ride-stats > div { display: flex; flex-direction: column; }
+.ride-stats b { font-size: 16px; font-weight: 700; }
+.ride-stats small { font-size: 10px; color: var(--text-2); }
+.ride-btn { width: 100%; background: var(--accent-2); color: #fff; font-weight: 700; font-size: 14px; padding: 9px; border-radius: var(--radius-sm); transition: transform .12s, background .2s; }
+.ride-btn:active { transform: scale(.97); }
+.ride-card.active { border-color: var(--accent); }
+.ride-card.active .ride-btn { background: var(--danger); }
+.ride-card.active .ride-timer { color: var(--accent); }
+
+/* ---- Bottom tab bar ---- */
+.tabbar { display: flex; justify-content: space-between; gap: 2px; padding-top: 4px; border-top: 1px solid var(--hairline); }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--text-3); font-size: 9.5px; font-weight: 600; transition: color .15s, transform .1s; }
+.tab .ti { font-size: 18px; filter: grayscale(1) opacity(.55); transition: filter .15s; }
+.tab:active { transform: scale(.9); }
+.tab.on { color: var(--accent); }
+.tab.on .ti { filter: none; }
+
+/* tighten rail spacing so it all fits on 800x480 */
+.rail { gap: 9px; padding-top: calc(var(--status-h) + 6px); padding-bottom: 8px; }
+
 /* responsive for small 800x480 still works; scale down rail on tiny */
-@media (max-width: 720px) { :root { --rail-w: 200px; } }
+@media (max-width: 720px) { :root { --rail-w: 210px; } }
+@media (max-height: 520px) { .ride-stats b { font-size: 14px; } .ride-timer { font-size: 24px; } }

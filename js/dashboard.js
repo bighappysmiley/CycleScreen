@@ -167,10 +167,35 @@ const Dashboard = (() => {
     };
   }
 
+  /* ---- Media controls (24six via bridge) ---- */
+  function paintMedia(np) {
+    const strip = document.getElementById('rail-media');
+    const has = np && np.title;
+    strip.hidden = !has;
+    if (!has) return;
+    document.getElementById('rm-title').textContent = np.title;
+    document.getElementById('rm-artist').textContent = np.artist || '';
+    const art = document.getElementById('rm-art');
+    art.innerHTML = np.artUrl ? `<img src="${np.artUrl}" alt="">` : '♪';
+    const playing = np.status === 'playing';
+    document.getElementById('rm-play').innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="16" height="16" style="margin-left:1px"><path d="M7 4l13 8-13 8V4z"/></svg>';
+  }
+
+  function wireMedia() {
+    document.getElementById('rm-prev').onclick = () => Bridge.control('previous');
+    document.getElementById('rm-next').onclick = () => Bridge.control('next');
+    document.getElementById('rm-play').onclick = () => Bridge.control('playpause');
+    document.getElementById('rm-art').onclick = () => App.open('music');
+    Bridge.on('nowplaying', paintMedia);
+  }
+
   function init() {
     refresh();
     paintClock(); setInterval(paintClock, 15000);
     wireSearch();
+    wireMedia();
     Device.on('gps', (s) => { paintSpeed(s.speedKmh); onRideFix(s); });
     Device.on('weather', paintWeather);
     document.getElementById('ride-btn').onclick = toggleRide;

@@ -1,0 +1,84 @@
+/* Reusable UI */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-brd);
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 15px;
+  padding: 12px 18px; border-radius: var(--radius-sm);
+  transition: transform .12s var(--ease-out), filter .15s, background .15s;
+}
+.btn:active { transform: scale(.95); filter: brightness(.9); }
+.btn--ghost { background: var(--fill); color: var(--text); }
+.btn--danger { background: var(--danger); }
+.btn--block { width: 100%; }
+.btn--pill { border-radius: 999px; }
+
+.card {
+  background: var(--bg-elev); border-radius: var(--radius-md);
+  border: 1px solid var(--hairline); overflow: hidden;
+}
+
+/* iOS-style list */
+.list { background: var(--bg-elev); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--hairline); }
+.list-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; min-height: 50px; position: relative;
+  transition: background .12s;
+}
+.list-row:active { background: var(--fill-2); }
+.list-row + .list-row::before {
+  content:""; position:absolute; top:0; left:46px; right:0; height:1px; background: var(--hairline);
+}
+.list-row .lr-icon {
+  width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  color: #fff; flex: 0 0 auto;
+}
+.list-row .lr-main { flex: 1; min-width: 0; }
+.list-row .lr-title { font-size: 15px; font-weight: 500; }
+.list-row .lr-sub { font-size: 12.5px; color: var(--text-2); margin-top: 1px; }
+.list-row .lr-trail { color: var(--text-2); font-size: 14px; display:flex; align-items:center; gap:6px; }
+.list-section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-2); margin: 18px 4px 7px; }
+
+/* Toggle switch */
+.switch { position: relative; width: 50px; height: 30px; flex: 0 0 auto; }
+.switch input { opacity: 0; width: 100%; height: 100%; margin: 0; }
+.switch .track { position: absolute; inset: 0; background: var(--fill); border-radius: 999px; transition: background .25s; }
+.switch .thumb { position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; background: #fff; border-radius: 50%; box-shadow: var(--shadow-1); transition: transform .25s var(--ease-spring); }
+.switch input:checked + .track { background: var(--accent-2); }
+.switch input:checked + .track + .thumb { transform: translateX(20px); }
+
+/* Segmented control */
+.segmented { display: flex; background: var(--fill-2); border-radius: 10px; padding: 2px; gap: 2px; }
+.segmented button { flex: 1; padding: 7px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); transition: all .2s; }
+.segmented button.on { background: var(--bg-elev-2); color: var(--text); box-shadow: var(--shadow-1); }
+
+/* Avatars */
+.avatar {
+  width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; font-size: 18px; color: #fff; flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  box-shadow: var(--shadow-1);
+}
+
+/* Modal sheet */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1500; opacity: 0; transition: opacity .25s; }
+.sheet-backdrop.show { opacity: 1; }
+.sheet {
+  position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 100%);
+  width: min(560px, 94%); background: var(--bg-elev); border-radius: 22px 22px 0 0;
+  padding: 14px 18px calc(18px + env(safe-area-inset-bottom)); z-index: 1600;
+  box-shadow: var(--shadow-2); transition: transform .34s var(--ease-spring);
+  border: 1px solid var(--hairline); border-bottom: none;
+}
+.sheet.show { transform: translate(-50%, 0); }
+.sheet-grab { width: 38px; height: 5px; background: var(--text-3); border-radius: 3px; margin: 2px auto 12px; }
+.sheet h3 { margin: 0 0 12px; font-size: 18px; }
+.field { width: 100%; background: var(--fill-2); border: 1px solid var(--hairline); color: var(--text); border-radius: 12px; padding: 12px 14px; font-size: 15px; margin-bottom: 10px; font-family: inherit; }
+.field:focus { outline: 2px solid var(--accent); }
+
+.empty { text-align: center; color: var(--text-2); padding: 40px 20px; font-size: 14px; }

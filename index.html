@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>CycleScreen</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/apps.css" />
+</head>
+<body data-theme="dark">
+  <!-- Status bar -->
+  <header id="statusbar" class="statusbar">
+    <div class="status-left">
+      <span id="status-clock">--:--</span>
+    </div>
+    <div class="status-center">
+      <span id="status-title">CycleScreen</span>
+    </div>
+    <div class="status-right">
+      <span id="status-gps" class="status-chip" title="GPS fix">
+        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+        <span id="gps-sats">--</span>
+      </span>
+      <span id="status-bt" class="status-chip" title="Bluetooth">
+        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6.5 6.5 17 17l-5 5V2l5 5L6.5 17.5"/></svg>
+      </span>
+      <span id="status-battery" class="status-chip">
+        <span class="batt"><span class="batt-fill" id="batt-fill"></span></span>
+        <span id="batt-pct">100%</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- Screen stack -->
+  <main id="screens">
+    <!-- Dashboard -->
+    <section class="screen screen--active" id="screen-dashboard">
+      <div id="map" class="map"></div>
+      <aside class="rail glass">
+        <div class="rail-profile">
+          <div class="avatar" id="rail-avatar">OF</div>
+          <div class="rail-name" id="rail-name">Or Frankel</div>
+          <div class="rail-username" id="rail-username">@orf</div>
+        </div>
+
+        <div class="rail-metrics">
+          <div class="metric metric--speed">
+            <div class="metric-value"><span id="rail-speed">0</span><small id="rail-speed-unit">km/h</small></div>
+            <div class="metric-label">Speed</div>
+          </div>
+          <div class="metric metric--weather">
+            <div class="metric-weather">
+              <span id="rail-weather-icon" class="weather-glyph">☀️</span>
+              <span id="rail-weather-temp">--°</span>
+            </div>
+            <div class="metric-label" id="rail-weather-desc">Loading…</div>
+          </div>
+        </div>
+
+        <div class="rail-dials">
+          <div class="rail-dials-title">Quick Dial</div>
+          <div class="dial-grid" id="dial-grid"><!-- populated --></div>
+        </div>
+
+        <button class="rail-apps-btn" id="open-drawer" aria-label="Open apps">
+          <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>
+        </button>
+      </aside>
+
+      <!-- Mini now-playing pill -->
+      <button class="now-pill glass" id="now-pill" hidden>
+        <span class="now-pill-art" id="now-pill-art">♪</span>
+        <span class="now-pill-text"><span id="now-pill-title">Nothing playing</span></span>
+        <span class="now-pill-eq"><i></i><i></i><i></i></span>
+      </button>
+    </section>
+
+    <!-- App Drawer -->
+    <section class="screen drawer" id="screen-drawer">
+      <div class="drawer-grid" id="drawer-grid"><!-- populated --></div>
+      <button class="drawer-close" data-nav="dashboard" aria-label="Close">Done</button>
+    </section>
+
+    <!-- App screens get injected here -->
+    <section class="screen app-host" id="screen-app">
+      <div class="app-bar glass">
+        <button class="app-back" data-nav="drawer">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Apps</span>
+        </button>
+        <h1 class="app-title" id="app-title">App</h1>
+        <div class="app-bar-spacer"></div>
+      </div>
+      <div class="app-body" id="app-body"><!-- injected --></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/device.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/friends.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+/* CycleScreen — design tokens (Apple-inspired) */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --accent: #0a84ff;          /* iOS blue */
+  --accent-2: #30d158;        /* green */
+  --danger: #ff453a;
+  --warn: #ff9f0a;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --teal: #64d2ff;
+
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+
+  --rail-w: 232px;
+  --status-h: 30px;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 0.32s;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.16);
+  --shadow-2: 0 8px 40px rgba(0,0,0,.35);
+}
+
+/* ---------- Dark theme (default) ---------- */
+[data-theme="dark"] {
+  --bg: #000000;
+  --bg-elev: #1c1c1e;
+  --bg-elev-2: #2c2c2e;
+  --glass: rgba(28, 28, 30, 0.62);
+  --glass-brd: rgba(255, 255, 255, 0.10);
+  --text: #ffffff;
+  --text-2: rgba(235, 235, 245, 0.6);
+  --text-3: rgba(235, 235, 245, 0.35);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --fill: rgba(118, 118, 128, 0.24);
+  --fill-2: rgba(118, 118, 128, 0.16);
+  --map-tone: 0.92;
+}
+
+/* ---------- Light theme ---------- */
+[data-theme="light"] {
+  --bg: #f2f2f7;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #ffffff;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-brd: rgba(0, 0, 0, 0.06);
+  --text: #000000;
+  --text-2: rgba(60, 60, 67, 0.6);
+  --text-3: rgba(60, 60, 67, 0.3);
+  --hairline: rgba(0, 0, 0, 0.08);
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-2: rgba(118, 118, 128, 0.08);
+  --map-tone: 1;
+}

@@ -87,7 +87,9 @@ const Settings = (() => {
       <div class="list-section-title">About</div>
       <div class="list">
         <div class="list-row"><div class="lr-main"><div class="lr-title">CycleScreen</div><div class="lr-sub">Raspberry Pi • 7″ display • GLONASS GPS</div></div><div class="lr-trail">v1.0</div></div>
-        <div class="list-row"><div class="lr-main"><div class="lr-title">GPS Source</div></div><div class="lr-trail" id="about-gps">—</div></div>
+        <div class="list-row" id="gps-row"><div class="lr-icon" style="background:#34c759">📍</div>
+          <div class="lr-main"><div class="lr-title">Location</div><div class="lr-sub" id="about-gps">—</div></div>
+          <div class="lr-trail" id="gps-retry">Use my location ›</div></div>
       </div>
     </div>`;
 
@@ -120,7 +122,16 @@ const Settings = (() => {
     };
     host.querySelector('#bt-row').onclick = async () => { Device.state.btConnected ? Device.disconnectBluetooth() : await Device.connectBluetooth(); btSync(); };
     btSync();
-    host.querySelector('#about-gps').textContent = Device.state.simulated ? 'Simulated' : 'GLONASS (live)';
+    const gpsLabel = () => {
+      const s = Device.state;
+      const el = host.querySelector('#about-gps'); if (!el) return;
+      el.textContent = !s.hasFix ? 'Locating…'
+        : s.simulated ? 'Simulated (tap to use real GPS)'
+        : `Live${s.accuracy ? ' · ±' + Math.round(s.accuracy) + 'm' : ''}`;
+    };
+    gpsLabel();
+    Device.on('gps', gpsLabel); Device.on('gpsstatus', gpsLabel);
+    host.querySelector('#gps-row').onclick = () => { App.toast('📍 Requesting location…'); Device.retryLocation(); };
 
     host.querySelector('#dial-edit').onclick = () => dialSheet(() => render(host));
 

@@ -26,17 +26,23 @@ const Device = (() => {
   };
 
   /* ---------------- GPS ---------------- */
-  let simTimer = null, fallbackTimer = null, lastReal = 0;
+  let simTimer = null, fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false;
+
   function startGPS() {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(onRealFix, onGeoError, {
-        enableHighAccuracy: true, maximumAge: 1000, timeout: 12000,
-      });
-      // Only fall back to simulation if no real fix shows up shortly.
-      fallbackTimer = setTimeout(() => { if (!state.hasFix) simulateGPS(); }, 4000);
-    } else {
-      simulateGPS();
-    }
+    if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); simulateGPS(); return; }
+    if (!window.isSecureContext) { emit('gpsstatus', { state: 'insecure' }); App.toast && App.toast('⚠️ Location needs HTTPS'); }
+    if (window.self !== window.top) emit('gpsstatus', { state: 'iframe' });
+    requestLocation();
+    // Fall back to simulation only if NOTHING (real or error) arrives in time.
+    fallbackTimer = setTimeout(() => { if (!state.hasFix) { emit('gpsstatus', { state: 'slow' }); simulateGPS(); } }, 9000);
+  }
+
+  // (Re)request location: a fast one-shot fix, plus a continuous high-accuracy watch.
+  function requestLocation() {
+    emit('gpsstatus', { state: 'locating' });
+    navigator.geolocation.getCurrentPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 });
+    if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    watchId = navigator.geolocation.watchPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 1000, timeout: 27000 });
   }
 
   function onRealFix(pos) {
@@ -45,7 +51,6 @@ const Device = (() => {
     const firstFix = lastReal === 0;
     lastReal = Date.now();
     const c = pos.coords;
-    // derive speed/heading if the device doesn't report them
     if (c.speed != null && !Number.isNaN(c.speed)) state.speedKmh = Math.max(0, c.speed * 3.6);
     else if (state.lastCoords) {
       const d = haversineKm(state.lastCoords, { lat: c.latitude, lng: c.longitude });
@@ -56,16 +61,29 @@ const Device = (() => {
     state.lastCoords = { lat: c.latitude, lng: c.longitude };
     state.lastTs = pos.timestamp;
     state.coords = { lat: c.latitude, lng: c.longitude };
+    state.accuracy = c.accuracy || null;
     state.satellites = c.accuracy && c.accuracy < 25 ? 11 : 7;
     state.hasFix = true; state.simulated = false;
     emit('gps', { ...state });
-    if (firstFix) fetchWeather(); // re-fetch weather at the real location
+    emit('gpsstatus', { state: 'live', accuracy: c.accuracy });
+    if (firstFix) fetchWeather();
   }
 
-  function onGeoError() {
-    // permission denied / unavailable / timeout → simulate so the UI still works
-    if (!state.hasFix || (Date.now() - lastReal > 15000)) simulateGPS();
+  function onGeoError(err) {
+    // err.code: 1 PERMISSION_DENIED, 2 POSITION_UNAVAILABLE, 3 TIMEOUT
+    if (err && err.code === 3 && !triedLowAccuracy) {
+      // high-accuracy timed out — retry with network/coarse location (faster)
+      triedLowAccuracy = true;
+      navigator.geolocation.getCurrentPosition(onRealFix, onGeoError, { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 });
+      return;
+    }
+    const reason = err && err.code === 1 ? 'denied' : err && err.code === 2 ? 'unavailable' : 'timeout';
+    emit('gpsstatus', { state: reason });
+    if (!state.hasFix || (Date.now() - lastReal > 20000)) simulateGPS();
   }
+
+  // Called from the UI to (re)prompt for location, e.g. after enabling permission.
+  function retryLocation() { triedLowAccuracy = false; clearTimeout(fallbackTimer); requestLocation(); }
 
   function haversineKm(a, b) {
     const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
@@ -166,11 +184,12 @@ const Device = (() => {
   }
 
   function init() {
-    startGPS();
+    // defer so UI listeners (gps/gpsstatus) are subscribed before the first emit
+    setTimeout(startGPS, 0);
     startBattery();
     fetchWeather();
     setInterval(fetchWeather, 10 * 60 * 1000);
   }
 
-  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather };
+  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather, retryLocation };
 })();

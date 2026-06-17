@@ -74,7 +74,30 @@ const App = (() => {
     f.style.width = Math.round(level * 100) + '%';
     f.style.background = level < 0.2 ? 'var(--danger)' : level < 0.4 ? 'var(--warn)' : 'var(--accent-2)';
   }
-  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.hasFix ? s.satellites : '—'; }
+  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.hasFix ? (s.simulated ? 'SIM' : s.satellites) : '…'; }
+
+  let warnedDenied = false;
+  function onGpsStatus(st) {
+    const chip = document.getElementById('status-gps');
+    chip.classList.remove('gps-live', 'gps-sim', 'gps-bad');
+    if (st.state === 'live') { chip.classList.add('gps-live'); warnedDenied = false; }
+    else if (st.state === 'locating') { document.getElementById('gps-sats').textContent = '…'; }
+    else if (['denied', 'insecure', 'iframe', 'unsupported'].includes(st.state)) {
+      chip.classList.add('gps-bad');
+      if (!warnedDenied) {
+        warnedDenied = true;
+        const msg = {
+          denied: '📍 Location blocked. Enable it for this site, then tap the GPS icon to retry.',
+          insecure: '📍 Real location needs HTTPS (open the https:// site).',
+          iframe: '📍 Open cyclescreen.netlify.app in a full browser tab for real GPS.',
+          unsupported: '📍 This browser has no geolocation.',
+        }[st.state];
+        toast(msg);
+      }
+    } else if (st.state === 'slow' || st.state === 'timeout' || st.state === 'unavailable') {
+      chip.classList.add('gps-sim');
+    }
+  }
   function paintBT(s) { document.getElementById('status-bt').classList.toggle('off', !s.btConnected); }
 
   /* ---- theme ---- */
@@ -150,6 +173,11 @@ const App = (() => {
     startClock();
 
     Device.on('gps', paintGPS); paintGPS(Device.state);
+    Device.on('gpsstatus', onGpsStatus);
+    // GPS chip is tappable to (re)request real location
+    const gpsChip = document.getElementById('status-gps');
+    gpsChip.style.pointerEvents = 'auto'; gpsChip.style.cursor = 'pointer';
+    gpsChip.onclick = () => { toast('📍 Requesting location…'); Device.retryLocation(); };
     Device.on('battery', paintBattery);
     Device.on('bt', paintBT); paintBT(Device.state);
     Device.on('call', () => {});

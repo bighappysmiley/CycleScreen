@@ -28,6 +28,9 @@ small { font-size: .62em; font-weight: 600; opacity: .65; }
 .status-center { flex: 0 0 auto; opacity: .85; letter-spacing: .2px; }
 .status-chip { display: inline-flex; align-items: center; gap: 4px; }
 .status-chip svg { opacity: .9; }
+#status-gps.gps-live { color: var(--accent-2); }
+#status-gps.gps-sim { color: var(--warn); }
+#status-gps.gps-bad { color: var(--danger); }
 #status-bt { transition: opacity .2s; }
 #status-bt.off { opacity: .28; }
 .batt { width: 24px; height: 12px; border: 1.5px solid var(--text); border-radius: 3px; position: relative; padding: 1.5px; }

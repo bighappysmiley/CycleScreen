@@ -36,8 +36,9 @@
 }
 .list-row .lr-icon {
   width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
-  color: #fff; flex: 0 0 auto;
+  color: #fff; flex: 0 0 auto; font-size: 15px;
 }
+.list-row .lr-icon svg { width: 17px; height: 17px; }
 .list-row .lr-main { flex: 1; min-width: 0; }
 .list-row .lr-title { font-size: 15px; font-weight: 500; }
 .list-row .lr-sub { font-size: 12.5px; color: var(--text-2); margin-top: 1px; }

@@ -18,9 +18,9 @@ const Music = (() => {
   let host = null, mount = null, service = '24six';
 
   const SERVICES = [
-    { id: '24six', name: '24six', color: '#bf5af2' },
-    { id: 'apple', name: 'Apple Music', color: '#fa233b', soon: true },
-    { id: 'spotify', name: 'Spotify', color: '#1db954', soon: true },
+    { id: '24six', name: '24six', color: '#bf5af2', logo: Icons.note },
+    { id: 'apple', name: 'Apple Music', color: '#fa233b', soon: true, logo: Icons.apple },
+    { id: 'spotify', name: 'Spotify', color: '#1db954', soon: true, logo: Icons.spotify },
   ];
   const allowed = (id) => !Store.get('parental.enabled') || (Store.get('parental.musicServices') || {})[id] !== false;
 
@@ -34,7 +34,7 @@ const Music = (() => {
     host.innerHTML = `
       <div class="svc-bar">${SERVICES.map((s) => `
         <button class="svc ${service === s.id ? 'on' : ''} ${!allowed(s.id) ? 'locked' : ''}" data-s="${s.id}" style="--svc:${s.color}">
-          ${s.name}${!allowed(s.id) ? ' 🔒' : ''}</button>`).join('')}</div>
+          <span class="svc-logo">${s.logo}</span>${s.name}${!allowed(s.id) ? '<span class="svc-lock">' + Icons.lock + '</span>' : ''}</button>`).join('')}</div>
       <div class="svc-body" id="svc-body"></div>`;
     host.querySelectorAll('.svc').forEach((b) => b.onclick = () => {
       if (!allowed(b.dataset.s)) return App.toast('🔒 Restricted by Parental Controls');
@@ -48,7 +48,7 @@ const Music = (() => {
   function renderComingSoon(svc) {
     mount.innerHTML = `
       <div class="coming-soon">
-        <div class="cs-logo" style="background:${svc.color}">${svc.id === 'spotify' ? '🟢' : '🍎'}</div>
+        <div class="cs-logo" style="background:${svc.color}">${svc.logo}</div>
         <h2>${svc.name}</h2>
         <div class="cs-badge">Coming Soon</div>
         <p>Streaming from ${svc.name} will arrive in a future CycleScreen update.</p>

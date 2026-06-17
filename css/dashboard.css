@@ -150,11 +150,11 @@
 
 /* ---- Bottom tab bar ---- */
 .tabbar { display: flex; justify-content: space-between; gap: 2px; padding-top: 4px; border-top: 1px solid var(--hairline); }
-.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--text-3); font-size: 9.5px; font-weight: 600; transition: color .15s, transform .1s; }
-.tab .ti { font-size: 18px; filter: grayscale(1) opacity(.55); transition: filter .15s; }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; color: var(--text-3); font-size: 9.5px; font-weight: 600; transition: color .15s, transform .1s; }
+.tab .ti { display: grid; place-items: center; }
+.tab .ti svg { width: 20px; height: 20px; }
 .tab:active { transform: scale(.9); }
 .tab.on { color: var(--accent); }
-.tab.on .ti { filter: none; }
 
 /* tighten rail spacing so it all fits on 800x480 */
 .rail { gap: 8px; padding: calc(var(--status-h) + 6px) 12px 8px; }

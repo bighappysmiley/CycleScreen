@@ -28,16 +28,16 @@ const Settings = (() => {
 
       <div class="list-section-title">Appearance</div>
       <div class="list">
-        <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">◐</div>
+        <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">${Icons.moon}</div>
           <div class="lr-main"><div class="lr-title">Theme</div></div>
           <div class="segmented" id="theme-seg" style="width:150px">
             <button data-v="light">Light</button><button data-v="dark">Dark</button>
           </div></div>
-        <div class="list-row"><div class="lr-icon" style="background:var(--accent)">🎨</div>
+        <div class="list-row"><div class="lr-icon" style="background:var(--accent)">${Icons.palette}</div>
           <div class="lr-main"><div class="lr-title">Accent Color</div>
             <div class="swatch-row" id="swatches">${accents.map((c) => `<button class="swatch" data-c="${c}" style="background:${c}"></button>`).join('')}</div>
           </div></div>
-        <div class="list-row" id="lang-row"><div class="lr-icon" style="background:#34c759">🌐</div>
+        <div class="list-row" id="lang-row"><div class="lr-icon" style="background:#34c759">${Icons.globe}</div>
           <div class="lr-main"><div class="lr-title">Language</div></div>
           <div class="lr-trail">${I18n.meta().flag} ${I18n.meta().native} ›</div></div>
       </div>
@@ -68,34 +68,34 @@ const Settings = (() => {
           <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6.5 6.5 17 17l-5 5V2l5 5L6.5 17.5" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></div>
           <div class="lr-main"><div class="lr-title">Bluetooth (Phone)</div><div class="lr-sub" id="bt-sub">Not connected</div></div>
           <div class="lr-trail" id="bt-act">Connect</div></div>
-        <div class="list-row" id="dial-edit"><div class="lr-icon" style="background:#30d158">📞</div>
+        <div class="list-row" id="dial-edit"><div class="lr-icon" style="background:#30d158">${Icons.phone}</div>
           <div class="lr-main"><div class="lr-title">Quick Dial Contacts</div></div><div class="lr-trail">Edit ›</div></div>
-        <div class="list-row" id="bridge-row"><div class="lr-icon" style="background:#bf5af2">🎵</div>
+        <div class="list-row" id="bridge-row"><div class="lr-icon" style="background:#bf5af2">${Icons.headphones}</div>
           <div class="lr-main"><div class="lr-title">24six Bridge</div><div class="lr-sub" id="bridge-sub">—</div></div>
           <div class="lr-trail">Edit ›</div></div>
       </div>
 
       <div class="list-section-title">Parental Controls</div>
       <div class="list">
-        <div class="list-row"><div class="lr-icon" style="background:#ff375f">🛡️</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff375f">${Icons.shield}</div>
           <div class="lr-main"><div class="lr-title">Enable Controls</div><div class="lr-sub">PIN-protected limits</div></div>
           <label class="switch"><input type="checkbox" id="par-en" ${par.enabled?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">⚡</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.bolt}</div>
           <div class="lr-main"><div class="lr-title">Speed Alert</div><div class="lr-sub">Warn above limit</div></div>
           <div class="lr-trail"><input class="field" id="par-speed" type="number" style="width:64px;margin:0;padding:7px;text-align:center" value="${par.maxSpeedAlert}"> km/h</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">🌙</div>
+        <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">${Icons.moon}</div>
           <div class="lr-main"><div class="lr-title">BikeTime (Downtime)</div><div class="lr-sub" id="bt-sub-row">Off</div></div>
           <div class="lr-trail" id="par-biketime">Edit ›</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#bf5af2">🎵</div>
+        <div class="list-row"><div class="lr-icon" style="background:#bf5af2">${Icons.music}</div>
           <div class="lr-main"><div class="lr-title">Restrict Music</div><div class="lr-sub">Block the Music app entirely</div></div>
           <label class="switch"><input type="checkbox" id="par-music" ${par.blockMusic?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">🎧</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.headphones}</div>
           <div class="lr-main"><div class="lr-title">Music Services</div><div class="lr-sub" id="ms-sub">Choose allowed services</div></div>
           <div class="lr-trail" id="par-services">Edit ›</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#5856d6">👥</div>
+        <div class="list-row"><div class="lr-icon" style="background:#5856d6">${Icons.friends}</div>
           <div class="lr-main"><div class="lr-title">Restrict Friends</div><div class="lr-sub">Block the Friends app entirely</div></div>
           <label class="switch"><input type="checkbox" id="par-friends" ${par.blockFriends?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
-        <div class="list-row"><div class="lr-icon" style="background:#0a84ff">💬</div>
+        <div class="list-row"><div class="lr-icon" style="background:#0a84ff">${Icons.chat}</div>
           <div class="lr-main"><div class="lr-title">Group Messaging</div><div class="lr-sub" id="gm-sub">Choose which groups can be messaged</div></div>
           <div class="lr-trail" id="par-groups">Edit ›</div></div>
         <div class="list-row" id="par-pin"><div class="lr-icon" style="background:#8e8e93">🔑</div>
@@ -104,11 +104,11 @@ const Settings = (() => {
 
       <div class="list-section-title">Security &amp; Anti-Theft</div>
       <div class="list">
-        <div class="list-row" id="lock-pin"><div class="lr-icon" style="background:#1c1c1e;border:1px solid var(--hairline)">🔒</div>
+        <div class="list-row" id="lock-pin"><div class="lr-icon" style="background:#1c1c1e;border:1px solid var(--hairline)">${Icons.lock}</div>
           <div class="lr-main"><div class="lr-title">${sec.lockPin?'Change':'Set'} Lock Passcode</div><div class="lr-sub">Required to unlock the screen & cancel the alarm</div></div><div class="lr-trail">›</div></div>
         <div class="list-row" id="lock-now-row"><div class="lr-icon" style="background:#48484a">⏏︎</div>
           <div class="lr-main"><div class="lr-title">Lock Now</div><div class="lr-sub">Manual lock — no automatic locking</div></div><div class="lr-trail">›</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff453a">🚨</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff453a">${Icons.shield}</div>
           <div class="lr-main"><div class="lr-title">Anti-Theft Alarm</div><div class="lr-sub">Siren if the bike is moved while armed</div></div>
           <label class="switch"><input type="checkbox" id="sec-alarm" ${sec.alarmArmed?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
         <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">📍</div>

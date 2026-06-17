@@ -2,12 +2,12 @@
 const App = (() => {
   // App registry — drawer order & metadata.
   const APPS = [
-    { id: 'music',    name: 'Music',   color: 'linear-gradient(135deg,#bf5af2,#ff375f)', glyph: '🎵', render: (h) => Music.render(h), guard: () => !Store.get('parental.blockMusic') },
-    { id: 'friends',  name: 'Friends', color: 'linear-gradient(135deg,#0a84ff,#64d2ff)', glyph: '👥', render: (h) => Friends.render(h), guard: () => true },
-    { id: 'settings', name: 'Settings',color: 'linear-gradient(135deg,#8e8e93,#48484a)', glyph: '⚙️', render: (h) => Settings.render(h), guard: () => true },
-    { id: 'maps',     name: 'Map',     color: 'linear-gradient(135deg,#30d158,#0a84ff)', glyph: '🗺️', action: () => { nav('dashboard'); MapView.recenter(); } },
-    { id: 'weather',  name: 'Weather', color: 'linear-gradient(135deg,#0a84ff,#64d2ff)', glyph: '⛅', action: () => weatherSheet() },
-    { id: 'fitness',  name: 'Fitness', color: 'linear-gradient(135deg,#30d158,#a2f44a)', glyph: '📊', action: () => fitnessSheet() },
+    { id: 'music',    name: 'Music',   color: '#ff2d55', icon: 'music',    render: (h) => Music.render(h), guard: () => !Store.get('parental.blockMusic') },
+    { id: 'friends',  name: 'Friends', color: '#0a84ff', icon: 'friends',  render: (h) => Friends.render(h), guard: () => true },
+    { id: 'settings', name: 'Settings',color: '#8e8e93', icon: 'settings', render: (h) => Settings.render(h), guard: () => true },
+    { id: 'maps',     name: 'Map',     color: '#34c759', icon: 'map',      action: () => { nav('dashboard'); MapView.recenter(); } },
+    { id: 'weather',  name: 'Weather', color: '#0a84ff', icon: 'weather',  action: () => weatherSheet() },
+    { id: 'fitness',  name: 'Fitness', color: '#ff9500', icon: 'fitness',  action: () => fitnessSheet() },
   ];
 
   let current = 'dashboard';
@@ -57,8 +57,8 @@ const App = (() => {
     grid.innerHTML = APPS.map((a, i) => {
       const locked = a.guard && !a.guard();
       return `<button class="app-icon" data-id="${a.id}" style="animation-delay:${i*0.03}s">
-        <div class="glyph" style="background:${a.color};${locked?'filter:grayscale(.6);opacity:.6':''}">${a.glyph}</div>
-        <span class="label">${a.name}${locked?' 🔒':''}</span></button>`;
+        <div class="glyph" style="background:${a.color};${locked?'opacity:.45':''}">${Icons[a.icon] || ''}${locked?'<span class="glyph-lock">'+Icons.lock+'</span>':''}</div>
+        <span class="label">${a.name}</span></button>`;
     }).join('');
     grid.querySelectorAll('.app-icon').forEach((b) => b.onclick = () => open(b.dataset.id));
   }
@@ -174,6 +174,8 @@ const App = (() => {
     // restore prefs
     setTheme(Store.get('theme'));
     setAccent(Store.get('accent'));
+
+    document.querySelectorAll('[data-icon]').forEach((el) => { el.innerHTML = Icons[el.dataset.icon] || ''; });
 
     Device.init();
     MapView.init();

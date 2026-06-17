@@ -11,6 +11,7 @@ themes, and PIN-protected parental controls.
 
 ## Features
 
+- **Accounts (Firebase, optional)** — real **username + password** sign-in with globally-unique usernames, and **shared realtime groups** (members, roles, chat, voice notes, challenges). Configure via [`pi/FIREBASE.md`](pi/FIREBASE.md); without it the app runs fully in local-only mode.
 - **First-run onboarding** — Apple-style **language picker** (English, Español, Français, Deutsch, עברית, العربية) + a **login / create-profile** screen with an optional passcode.
 - **Dashboard** — full-screen map with a live, auto-following rider marker and breadcrumb trail, plus map overlays: a **clock + date** card, a **place search** bar (geocoded), and a large **speed gauge**.
 - **Current Ride tracker** — Start/End a ride with a live **timer**, **distance**, **average speed**, and **heart-rate (BPM)**.

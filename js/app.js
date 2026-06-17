@@ -230,6 +230,8 @@ const App = (() => {
     document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   }
 
+  function afterOnboard() { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); }
+
   function boot() {
     // restore prefs + language before anything renders
     setTheme(Store.get('theme'));
@@ -237,8 +239,23 @@ const App = (() => {
     I18n.set(Store.get('language') || 'en');
     init();
     Security.init();
-    if (!Store.get('onboarded')) {
-      Onboarding.start(() => { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); });
+    Cloud.init();
+
+    if (Cloud.enabled) {
+      // Real accounts: gate on Firebase auth state.
+      let started = false;
+      Cloud.onAuth((u) => {
+        if (u) {
+          const initials = (u.name || u.username).split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+          Store.update((d) => { d.profile.name = u.name; d.profile.username = u.username; d.profile.initials = initials; d.onboarded = true; });
+          afterOnboard();
+        } else if (!started) {
+          started = true;
+          Onboarding.start(afterOnboard); // language → sign in / create account
+        }
+      });
+    } else if (!Store.get('onboarded')) {
+      Onboarding.start(afterOnboard);
     }
   }
 

@@ -29,6 +29,13 @@ const Settings = (() => {
           <div class="lr-trail">${I18n.meta().flag} ${I18n.meta().native} ›</div></div>
       </div>
 
+      ${Cloud.enabled ? `<div class="list-section-title">Account</div>
+      <div class="list">
+        <div class="list-row"><div class="lr-icon" style="background:#30d158">✅</div>
+          <div class="lr-main"><div class="lr-title">${Cloud.user() ? 'Signed in' : 'Not signed in'}</div><div class="lr-sub">${Cloud.user() ? '@' + Cloud.user().username + ' · synced' : 'Local only'}</div></div></div>
+        ${Cloud.user() ? `<div class="list-row" id="signout-row"><div class="lr-icon" style="background:#ff453a">⎋</div><div class="lr-main"><div class="lr-title">Sign Out</div></div><div class="lr-trail">›</div></div>` : ''}
+      </div>` : ''}
+
       <div class="list-section-title">Profile</div>
       <div class="list">
         <div class="list-row" id="edit-name"><div class="lr-icon" style="background:#0a84ff">👤</div>
@@ -135,6 +142,9 @@ const Settings = (() => {
     gpsLabel();
     Device.on('gps', gpsLabel); Device.on('gpsstatus', gpsLabel);
     host.querySelector('#gps-row').onclick = () => { App.toast('📍 Requesting location…'); Device.retryLocation(); };
+
+    const signoutRow = host.querySelector('#signout-row');
+    if (signoutRow) signoutRow.onclick = async () => { await Cloud.signOut(); Store.set('onboarded', false); location.reload(); };
 
     host.querySelector('#dial-edit').onclick = () => dialSheet(() => render(host));
 

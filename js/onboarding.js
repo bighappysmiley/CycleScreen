@@ -44,10 +44,43 @@ const Onboarding = (() => {
       root.querySelector('.onb-welcome').textContent = I18n.t('welcome');
       root.querySelector('.onb-sub').textContent = I18n.t('choose_language');
     });
-    root.querySelector('#onb-next').onclick = loginScreen;
+    root.querySelector('#onb-next').onclick = () => (Cloud.enabled ? authScreen('signin') : loginScreen());
   }
 
-  /* ---- 2. Login / profile ---- */
+  /* ---- 2a. Real account (Firebase username + password) ---- */
+  function authScreen(mode) {
+    const signup = mode === 'signup';
+    step(`
+      <div class="onb-logo sm">🚴</div>
+      <h1 class="onb-title">${signup ? 'Create account' : 'Sign in'}</h1>
+      <p class="onb-sub">${signup ? 'Pick a unique username' : 'Welcome back'}</p>
+      <div class="onb-form">
+        ${signup ? `<input class="field" id="au-name" placeholder="${I18n.t('your_name')}" autocomplete="off" />` : ''}
+        <div class="onb-user-wrap"><span class="at">@</span><input class="field" id="au-user" placeholder="${I18n.t('username')}" autocomplete="off" style="padding-left:30px"></div>
+        <input class="field" id="au-pass" type="password" placeholder="Password" autocomplete="${signup ? 'new-password' : 'current-password'}" />
+      </div>
+      <div class="onb-err" id="au-err" hidden></div>
+      <button class="btn btn--block btn--pill onb-cta" id="au-go">${signup ? 'Create account' : 'Sign in'}</button>
+      <button class="onb-back" id="au-toggle">${signup ? 'Have an account? Sign in' : 'New here? Create an account'}</button>`);
+
+    const err = (m) => { const e = root.querySelector('#au-err'); e.hidden = !m; e.textContent = m || ''; };
+    root.querySelector('#au-toggle').onclick = () => authScreen(signup ? 'signin' : 'signup');
+    root.querySelector('#au-go').onclick = async () => {
+      const username = (root.querySelector('#au-user').value || '').trim().replace(/^@/, '').toLowerCase();
+      const password = root.querySelector('#au-pass').value;
+      const name = signup ? (root.querySelector('#au-name').value.trim() || username) : username;
+      const btn = root.querySelector('#au-go'); btn.disabled = true; btn.textContent = 'Please wait…'; err('');
+      try {
+        if (signup) await Cloud.signUp({ username, name, password });
+        else await Cloud.signIn({ username, password });
+        // local profile mirrors the account for display; auth state drives the rest
+        Store.update((d) => { d.profile.name = name; d.profile.username = username; d.profile.initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(); d.onboarded = true; });
+        finish();
+      } catch (e) { btn.disabled = false; btn.textContent = signup ? 'Create account' : 'Sign in'; err(e.message || 'Failed'); }
+    };
+  }
+
+  /* ---- 2b. Local profile (no Firebase configured) ---- */
   function loginScreen() {
     step(`
       <div class="onb-logo sm">👤</div>

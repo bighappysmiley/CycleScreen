@@ -44,6 +44,7 @@
 .onb-user-wrap .at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-2); font-size: 15px; }
 .onb-user-wrap .field { padding-left: 30px; }
 .onb-hint { font-size: 12.5px; color: var(--text-2); margin: 10px 4px 16px; }
+.onb-err { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); font-size: 13px; font-weight: 500; padding: 9px 12px; border-radius: 10px; margin: 0 0 10px; text-align: start; }
 .onb-cta { margin-bottom: 10px; }
 .onb-back { color: var(--accent); font-size: 14px; font-weight: 600; padding: 6px; }
 [dir="rtl"] .onb-back { transform: scaleX(-1); }

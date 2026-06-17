@@ -2,7 +2,7 @@
 const Store = (() => {
   const KEY = 'cyclescreen.v1';
   const defaults = {
-    profile: { name: 'Or Frankel', username: 'orf', initials: 'OF', units: 'imperial' },
+    profile: { name: '', username: '', initials: '', units: 'imperial' },
     onboarded: false,
     language: 'en',
     theme: 'dark',

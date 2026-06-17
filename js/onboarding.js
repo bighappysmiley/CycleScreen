@@ -49,16 +49,15 @@ const Onboarding = (() => {
 
   /* ---- 2. Login / profile ---- */
   function loginScreen() {
-    const p = Store.get('profile');
     step(`
       <div class="onb-logo sm">👤</div>
       <h1 class="onb-title">${I18n.t('sign_in')}</h1>
       <p class="onb-sub">${I18n.t('create_profile')}</p>
       <div class="onb-form">
-        <input class="field" id="onb-name" placeholder="${I18n.t('your_name')}" value="${p.name || ''}" autocomplete="name" />
+        <input class="field" id="onb-name" placeholder="${I18n.t('your_name')}" autocomplete="off" />
         <div class="onb-user-wrap">
           <span class="at">@</span>
-          <input class="field" id="onb-user" placeholder="${I18n.t('username')}" value="${p.username || ''}" autocomplete="username" />
+          <input class="field" id="onb-user" placeholder="${I18n.t('username')}" autocomplete="off" />
         </div>
         <input class="field" id="onb-pass" type="password" inputmode="numeric" maxlength="6" placeholder="${I18n.t('passcode')}" />
       </div>

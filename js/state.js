@@ -21,6 +21,7 @@ const Store = (() => {
     parental: { enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false, curfewEnd: '' },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
     music: { volume: 0.7, shuffle: false, repeat: false },
+    bridge: { url: 'http://127.0.0.1:8765' }, // CycleScreen companion service on the Pi
     lastRide: null, // { date, distanceKm, durationSec, avgKmh }
   };
 

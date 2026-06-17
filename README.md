@@ -17,7 +17,7 @@ themes, and PIN-protected parental controls.
 - **Bottom tab bar** — Home · Apps · Theme · Settings · Lock.
 - **Left rail** — your name + presence, large **speed** readout, **weather** (live, from your GPS location), and **quick-dial contacts** (tap to call over your phone's Bluetooth, **hold to edit**).
 - **App drawer** — springboard-style grid: 24six, Friends, Settings, Map, Weather, Fitness.
-- **24six music** — opens the real [24six](https://24six.app) service (embedded, with a guaranteed "Open 24six ↗" launch fallback, since 24six has no public/embeddable API).
+- **24six music** — integrates the **native 24six app** on the Pi via a small companion bridge (real login + playback): launches 24six, shows live Now Playing, sends play/pause/next, and auto-returns to CycleScreen when a song starts. See [`pi/README.md`](pi/README.md). (A best-effort web embed is included as a fallback.)
 - **Quick-dial calling** — each contact dials via the platform's `tel:` handler (connected phone / cellular / VoIP softphone).
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.
 - **Settings** — light/dark theme, accent color, profile, units (km/h ↔ mph), Bluetooth pairing, quick-dial editor.

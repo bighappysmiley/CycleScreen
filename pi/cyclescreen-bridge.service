@@ -1,0 +1,15 @@
+[Unit]
+Description=CycleScreen 24six bridge
+After=graphical.target
+
+[Service]
+# Adjust User and the DISPLAY/WAYLAND vars to match your kiosk session
+User=pi
+Environment=DISPLAY=:0
+Environment=CYCLESCREEN_24SIX_LAUNCH=waydroid app launch app.tfs.music
+ExecStart=/usr/bin/python3 /home/pi/CycleScreen/pi/cyclescreen-bridge.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

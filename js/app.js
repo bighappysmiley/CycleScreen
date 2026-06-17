@@ -190,15 +190,21 @@ const App = (() => {
     Device.on('bt', paintBT); paintBT(Device.state);
     Device.on('call', () => {});
 
-    // now-playing pill
-    Music.onChange((st) => {
+    // now-playing pill — fed by the native 24six app via the bridge
+    Bridge.on('nowplaying', (np) => {
       const pill = document.getElementById('now-pill');
-      pill.hidden = !st.playing && st.pos === 0;
-      document.getElementById('now-pill-title').textContent = `${st.track.title} — ${st.track.artist}`;
-      document.getElementById('now-pill-art').textContent = st.track.art;
-      pill.querySelector('.now-pill-eq').style.visibility = st.playing ? 'visible' : 'hidden';
+      const has = np && np.title;
+      pill.hidden = !has;
+      if (!has) return;
+      document.getElementById('now-pill-title').textContent = np.artist ? `${np.title} — ${np.artist}` : np.title;
+      const artEl = document.getElementById('now-pill-art');
+      artEl.innerHTML = np.artUrl ? `<img src="${np.artUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">` : '♪';
+      pill.querySelector('.now-pill-eq').style.visibility = np.status === 'playing' ? 'visible' : 'hidden';
     });
+    // when a song starts in 24six, jump back to the dashboard so it's visible
+    Bridge.on('startedplaying', () => { closeDrawer(); nav('dashboard'); setTab('home'); });
     document.getElementById('now-pill').onclick = () => open('music');
+    Bridge.start();
 
     // nav wiring
     document.querySelectorAll('[data-nav]').forEach((b) => b.onclick = () => nav(b.dataset.nav));

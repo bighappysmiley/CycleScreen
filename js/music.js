@@ -1,86 +1,107 @@
-/* music.js — 24SIX-style music player.
+/* music.js — 24six music, driven by the native app on the Pi via the bridge.
  *
- * The catalog below stands in for the 24six streaming service; on the Pi the
- * `src` URLs would point at the 24six API stream endpoints. Playback uses a
- * single shared <audio> element so the dashboard now-playing pill stays in
- * sync with the full player.
+ * The native 24six app handles login/playback (which an embedded web view
+ * can't, due to 24six's auth/DRM). This screen:
+ *   - launches / re-focuses the native 24six app
+ *   - shows live "Now Playing" (title/artist/art/progress) from the bridge
+ *   - sends play-pause / next / previous over MPRIS through the bridge
+ *
+ * When the bridge isn't reachable (e.g. a normal browser, or it's not set up
+ * yet) it shows setup guidance plus the best-effort web embed as a fallback.
  */
 const Music = (() => {
-  const audio = new Audio();
-  audio.preload = 'none';
+  const fmt = (us) => {
+    const s = Math.max(0, Math.floor((us || 0) / 1e6));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  };
 
-  const catalog = [
-    { id: 1, title: 'Tracht Gut',      artist: 'Benny Friedman', dur: 214, art: '🎵' },
-    { id: 2, title: 'Im Eshkachech',   artist: 'Abie Rotenberg', dur: 252, art: '🎶' },
-    { id: 3, title: 'One Day',         artist: 'Yaakov Shwekey',  dur: 233, art: '🎼' },
-    { id: 4, title: 'Yesh Tikva',      artist: 'Mordechai Ben David', dur: 198, art: '🎹' },
-    { id: 5, title: 'Kol Haolam',      artist: 'Eitan Katz',     dur: 276, art: '🪕' },
-    { id: 6, title: 'Hofaim',          artist: 'Ishay Ribo',     dur: 241, art: '🎤' },
-  ];
+  let host = null;
 
-  let idx = 0, playing = false, pos = 0, ticker = null;
-  const subs = [];
-  const onChange = (fn) => subs.push(fn);
-  const notify = () => subs.forEach((f) => f(stateView()));
-  const cur = () => catalog[idx];
-  function stateView() { return { track: cur(), playing, pos, dur: cur().dur, idx }; }
-
-  function play(i) {
-    if (i != null && i !== idx) { idx = i; pos = 0; }
-    playing = true;
-    // (real audio.src would be set here; we simulate progress for the demo)
-    startTicker();
-    notify();
+  function render(h) {
+    host = h;
+    Bridge.isAvailable() ? renderPlayer() : renderSetup();
   }
-  function pause() { playing = false; stopTicker(); notify(); }
-  function toggle() { playing ? pause() : play(); }
-  function next() { idx = (idx + 1) % catalog.length; pos = 0; if (playing) startTicker(); notify(); }
-  function prev() { if (pos > 4) { pos = 0; } else { idx = (idx - 1 + catalog.length) % catalog.length; } if (playing) startTicker(); notify(); }
-  function seek(frac) { pos = Math.max(0, Math.min(1, frac)) * cur().dur; notify(); }
 
-  function startTicker() {
-    stopTicker();
-    ticker = setInterval(() => {
-      pos += 1;
-      if (pos >= cur().dur) { Store.get('music.repeat') ? (pos = 0) : next(); }
-      notify();
-    }, 1000);
-  }
-  function stopTicker() { if (ticker) clearInterval(ticker); ticker = null; }
+  /* ---- native player (bridge connected) ---- */
+  function renderPlayer() {
+    const np = Bridge.now();
+    const has = np && np.title;
+    const art = has && np.artUrl ? `<img src="${np.artUrl}" alt="">` : '🎵';
+    const playing = np && np.status === 'playing';
+    const pct = has && np.length ? Math.min(100, (np.position / np.length) * 100) : 0;
 
-  const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-
-  /* ----- 24six: rendered IN-KIOSK via the /24six reverse proxy ----- */
-  // The proxy (netlify/edge-functions/proxy-24six.ts) strips 24six's framing
-  // headers so it loads inside CycleScreen. The app screen's top bar keeps a
-  // Back button, so the rider never gets stranded — no new tab is opened.
-  const PROXY_24SIX = '/24six/';
-  function render(host) {
-    // The proxy strips 24six's framing headers, so the iframe renders the real
-    // 24six full-bleed inside the kiosk. The app bar's Back button returns to
-    // CycleScreen — no new tab, no spurious fallback.
     host.innerHTML = `
-      <div class="t24-wrap">
-        <iframe class="t24-frame" id="t24-frame" src="${PROXY_24SIX}"
-                allow="autoplay; encrypted-media; microphone; clipboard-write; fullscreen"></iframe>
+      <div class="music-hero">
+        <div class="music-art ${playing ? 'spin' : ''}" id="mart">${art}</div>
+        <div class="music-meta">
+          <div class="music-brand">24SIX • ${has ? (playing ? 'NOW PLAYING' : 'PAUSED') : 'READY'}</div>
+          <div class="music-track-title" id="mtitle">${has ? np.title : 'Nothing playing'}</div>
+          <div class="music-track-artist" id="martist">${has ? (np.artist || '') : 'Open 24six and pick a song'}</div>
+        </div>
+      </div>
+      <div class="music-progress"><div class="fill" id="mfill" style="width:${pct}%"></div></div>
+      <div class="music-times"><span>${has ? fmt(np.position) : '0:00'}</span><span>${has ? fmt(np.length) : '0:00'}</span></div>
+      <div class="music-controls">
+        <button id="mprev"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
+        <button id="mplay" class="music-play"></button>
+        <button id="mnext"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="app-pad">
+        <button class="btn btn--block btn--pill" id="open24" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">Open 24six app</button>
+        <p style="text-align:center;color:var(--text-2);font-size:12px;margin-top:10px">
+          Pick a song in 24six — CycleScreen returns automatically when it starts.</p>
       </div>`;
+
+    paintPlay(playing);
+    host.querySelector('#mplay').onclick = () => Bridge.control('playpause');
+    host.querySelector('#mnext').onclick = () => Bridge.control('next');
+    host.querySelector('#mprev').onclick = () => Bridge.control('previous');
+    host.querySelector('#open24').onclick = () => { Bridge.launch(); App.toast('Opening 24six…'); };
   }
 
-  function paintPlay(host) {
-    const b = host.querySelector('#mplay'); if (!b) return;
+  function paintPlay(playing) {
+    const b = host && host.querySelector('#mplay'); if (!b) return;
     b.innerHTML = playing
       ? '<svg width="26" height="26" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
       : '<svg width="26" height="26" viewBox="0 0 24 24" style="margin-left:3px"><path d="M7 4l13 8-13 8V4z"/></svg>';
-    const art = host.querySelector('#mart'); if (art) art.classList.toggle('spin', playing);
-  }
-  function paintProgress(host) {
-    const f = host.querySelector('#mfill'); if (!f) return;
-    f.style.width = (pos / cur().dur * 100) + '%';
-    host.querySelector('#mcur').textContent = fmt(pos);
   }
 
-  const music = { render, play, pause, toggle, next, prev, onChange, stateView, _host: null };
-  // keep the open player view live
-  onChange(() => { if (music._host && document.body.contains(music._host)) { paintPlay(music._host); paintProgress(music._host); } });
-  return music;
+  /* ---- setup / fallback (bridge not connected) ---- */
+  let usingEmbed = false;
+  function renderSetup() {
+    if (usingEmbed) return renderEmbed();
+    host.innerHTML = `
+      <div class="app-pad" style="max-width:520px;margin:0 auto">
+        <div style="text-align:center;padding:8px 0 6px"><div style="font-size:48px">🎵</div>
+          <h3 style="margin:6px 0 2px">Connect 24six</h3>
+          <p style="color:var(--text-2);font-size:13px;margin:0">Run the 24six app on the Pi with the CycleScreen bridge for real login &amp; playback.</p>
+        </div>
+        <div class="list" style="margin-top:14px">
+          <div class="list-row"><div class="lr-icon" style="background:#34c759">1</div><div class="lr-main"><div class="lr-title">Install the bridge</div><div class="lr-sub">pi/cyclescreen-bridge.py + playerctl, wmctrl</div></div></div>
+          <div class="list-row"><div class="lr-icon" style="background:#0a84ff">2</div><div class="lr-main"><div class="lr-title">Run the native 24six app</div><div class="lr-sub">Android (Waydroid) or desktop build</div></div></div>
+          <div class="list-row"><div class="lr-icon" style="background:#bf5af2">3</div><div class="lr-main"><div class="lr-title">Set the bridge URL</div><div class="lr-sub" id="setup-url">${Bridge.base()}</div></div><div class="lr-trail" id="setup-edit">Edit ›</div></div>
+        </div>
+        <button class="btn btn--block btn--pill" id="setup-web" style="margin-top:14px">Use 24six web player instead</button>
+        <p style="text-align:center;color:var(--text-3);font-size:11px;margin-top:8px">Web player can't keep you logged in (24six blocks embedding).</p>
+      </div>`;
+    host.querySelector('#setup-edit').onclick = () => App.open('settings');
+    host.querySelector('#setup-web').onclick = () => { usingEmbed = true; renderEmbed(); };
+  }
+
+  function renderEmbed() {
+    host.innerHTML = `<div class="t24-wrap">
+      <iframe class="t24-frame" src="/24six/" allow="autoplay; encrypted-media; microphone; clipboard-write; fullscreen"></iframe>
+    </div>`;
+  }
+
+  /* live updates while the player screen is open */
+  function refresh() {
+    if (host && document.body.contains(host)) {
+      if (Bridge.isAvailable() && !usingEmbed) renderPlayer();
+    }
+  }
+  Bridge.on('nowplaying', refresh);
+  Bridge.on('status', () => { usingEmbed = false; refresh(); });
+
+  return { render };
 })();

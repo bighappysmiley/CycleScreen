@@ -1,0 +1,16 @@
+# Netlify configuration for CycleScreen (static site, no build step)
+[build]
+  publish = "."
+  command = ""
+
+# SPA-style fallback so any path loads the app shell
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Geolocation + Bluetooth are needed for the real GPS dongle / phone
+    Permissions-Policy = "geolocation=(self), bluetooth=(self)"

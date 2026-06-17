@@ -23,6 +23,6 @@ window.CYCLESCREEN_FIREBASE = {
  * below. (Unsigned uploads are safe from the browser; no API secret is exposed.)
  */
 window.CYCLESCREEN_CLOUDINARY = {
-  cloudName: "",      // e.g. "dxxxxxx"  (Cloudinary dashboard → "Cloud name")
-  uploadPreset: "",   // the unsigned upload preset name
+  cloudName: "ddz3lxzaq",
+  uploadPreset: "CycleScreen",
 };

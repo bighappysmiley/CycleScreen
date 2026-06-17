@@ -1,51 +1,73 @@
-// Netlify Edge Function: reverse-proxy 24six so it can be embedded in the
-// CycleScreen kiosk. Closed apps block framing with X-Frame-Options / CSP
-// frame-ancestors; this fetches 24six from the server side and strips those
-// headers so the iframe at /24six/* renders inside CycleScreen instead of
-// being blocked or forcing a new tab.
+// Netlify Edge Function: full same-origin reverse proxy for 24six so it works
+// (login + session) embedded in the CycleScreen kiosk.
 //
-// NOTE: 24six is a closed, authenticated app. Stripping the framing headers
-// lets it DISPLAY in-kiosk, but its login/streaming calls are still its own
-// cross-origin/cookie-gated API — full playback may not work through a proxy.
+// Why this shape: 24six is a closed, CSRF-protected (Laravel-style, hence the
+// 419) app. To keep its session consistent we must serve EVERYTHING through
+// this one origin — the page, its assets, AND its login/API POSTs — instead of
+// letting calls go straight to 24six.app cross-origin. We also bind 24six's
+// Set-Cookie to this origin (strip Domain) and keep redirects on-origin.
+//
+// CycleScreen's own files are served untouched (we return early for them);
+// every other path is proxied to 24six.app.
+//
+// Caveat: if 24six hardcodes absolute https://24six.app URLs in its JS, or uses
+// OAuth/social login or DRM, those can still bypass the proxy. Email/password
+// login is what this is meant to fix.
+
+const FIRST_PARTY_EXACT = new Set(["/", "/index.html", "/favicon.ico", "/netlify.toml"]);
+const FIRST_PARTY_PREFIX = ["/js/", "/css/", "/.netlify/"];
+
 export default async (request: Request) => {
   const url = new URL(request.url);
-  const upstreamPath = url.pathname.replace(/^\/24six/, "") || "/";
+  const p = url.pathname;
+
+  // Serve CycleScreen's own assets normally.
+  if (FIRST_PARTY_EXACT.has(p) || FIRST_PARTY_PREFIX.some((x) => p.startsWith(x))) return;
+
+  const upstreamPath = p.startsWith("/24six") ? (p.replace(/^\/24six/, "") || "/") : p;
   const target = "https://24six.app" + upstreamPath + url.search;
 
-  const init: RequestInit = {
-    method: request.method,
-    headers: new Headers(request.headers),
-    redirect: "manual",
-  };
-  (init.headers as Headers).set("host", "24six.app");
-  (init.headers as Headers).delete("accept-encoding");
+  const headers = new Headers(request.headers);
+  headers.delete("host");
+  headers.delete("accept-encoding");
+  // Tell 24six the request originates from itself (helps CSRF origin checks).
+  headers.set("origin", "https://24six.app");
+  headers.set("referer", "https://24six.app" + upstreamPath);
+
+  const init: RequestInit = { method: request.method, headers, redirect: "manual" };
   if (!["GET", "HEAD"].includes(request.method)) init.body = await request.arrayBuffer();
 
-  let upstream: Response;
+  let up: Response;
   try {
-    upstream = await fetch(target, init);
-  } catch (e) {
+    up = await fetch(target, init);
+  } catch {
     return new Response("24six is unreachable from the proxy.", { status: 502 });
   }
 
-  const headers = new Headers(upstream.headers);
-  headers.delete("x-frame-options");
-  headers.delete("content-security-policy");
-  headers.delete("content-security-policy-report-only");
-  headers.delete("content-encoding");
-  headers.delete("content-length");
+  const rh = new Headers(up.headers);
+  rh.delete("x-frame-options");
+  rh.delete("content-security-policy");
+  rh.delete("content-security-policy-report-only");
+  rh.delete("content-encoding");
+  rh.delete("content-length");
 
-  const ct = upstream.headers.get("content-type") || "";
-  if (ct.includes("text/html")) {
-    let html = await upstream.text();
-    // make relative URLs resolve back to 24six.app so assets still load
-    if (!/<base /i.test(html)) {
-      html = html.replace(/<head([^>]*)>/i, `<head$1><base href="https://24six.app/">`);
-    }
-    headers.set("content-type", "text/html; charset=utf-8");
-    return new Response(html, { status: upstream.status, headers });
+  // Bind 24six's cookies to THIS origin so the session is consistent.
+  rh.delete("set-cookie");
+  const cookies = (up.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
+  for (const c of cookies) {
+    rh.append("set-cookie", c.replace(/;\s*Domain=[^;]+/i, ""));
   }
-  return new Response(upstream.body, { status: upstream.status, headers });
+
+  // Keep redirects on our origin and inside the 24six space (so a post-login
+  // redirect to "/" shows 24six's home, not CycleScreen).
+  const loc = rh.get("location");
+  if (loc) {
+    let nl = loc.replace(/^https?:\/\/24six\.app/i, "");
+    if (nl === "" || nl === "/") nl = "/24six/";
+    rh.set("location", nl);
+  }
+
+  return new Response(up.body, { status: up.status, headers: rh });
 };
 
-export const config = { path: ["/24six", "/24six/*"] };
+export const config = { path: "/*" };

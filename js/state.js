@@ -12,7 +12,7 @@ const Store = (() => {
     parental: {
       enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false,
       bikeTime: { enabled: false, start: '21:00', end: '07:00' },
-      musicServices: { spotify: true, apple: true },
+      musicServices: { spotify: true },
       msgBlockedGroups: [], // group ids the user may NOT message in
     },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },

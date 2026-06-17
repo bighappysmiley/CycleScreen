@@ -27,12 +27,10 @@ window.CYCLESCREEN_CLOUDINARY = {
   uploadPreset: "CycleScreen",
 };
 
-/* Music — default content shown in the Spotify / Apple Music embed players.
+/* Music — default content shown in the Spotify embed player.
  * spotify: path after open.spotify.com/embed/  (e.g. "playlist/<id>", "album/<id>")
- * apple:   path after embed.music.apple.com/    (e.g. "us/playlist/<slug>/<pl.id>")
- * Copy a share/embed link from the app and paste the path part here.
+ * Copy a share link from Spotify and paste the path part here.
  */
 window.CYCLESCREEN_MUSIC = {
   spotify: "playlist/37i9dQZF1DXcBWIGoYBM5M",
-  apple: "",
 };

@@ -12,14 +12,14 @@ const Cloud = (() => {
   const cfg = window.CYCLESCREEN_FIREBASE || {};
   const enabled = !!(cfg.apiKey && window.firebase);
 
-  let auth = null, db = null, storage = null, me = null;
+  let auth = null, db = null, me = null;
   const authSubs = [];
 
   function init() {
     if (!enabled) return false;
     try {
       firebase.initializeApp(cfg);
-      auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
+      auth = firebase.auth(); db = firebase.firestore();
       auth.onAuthStateChanged(async (u) => {
         if (u) {
           const doc = await db.collection("users").doc(u.uid).get();
@@ -115,10 +115,19 @@ const Cloud = (() => {
       fromUid: me.uid, fromName: me.name, ts: firebase.firestore.FieldValue.serverTimestamp(), ...msg,
     });
   }
+  // Voice/media storage via Cloudinary unsigned upload (returns a hosted URL).
   async function uploadVoice(gid, blob) {
-    const ref = storage.ref(`groups/${gid}/voice/${Date.now()}.webm`);
-    await ref.put(blob);
-    return ref.getDownloadURL();
+    const cfg = window.CYCLESCREEN_CLOUDINARY || {};
+    if (!cfg.cloudName || !cfg.uploadPreset) throw new Error("Cloudinary not configured");
+    const form = new FormData();
+    form.append("file", blob);
+    form.append("upload_preset", cfg.uploadPreset);
+    form.append("folder", `cyclescreen/voice/${gid}`);
+    // audio uploads use Cloudinary's "video" (a/v) resource type
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/video/upload`, { method: "POST", body: form });
+    if (!r.ok) throw new Error("Cloudinary upload failed");
+    const j = await r.json();
+    return j.secure_url;
   }
 
   function createChallenge(gid, c) {

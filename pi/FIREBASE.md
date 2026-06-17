@@ -11,7 +11,7 @@ Until you add a config it runs in **local-only mode**.
    Email/Password → Enable**. (We map usernames to emails internally, so this
    is all that's needed — users only ever see "username + password".)
 3. **Build → Firestore Database → Create database** (production mode).
-4. **Build → Storage → Get started** (for voice notes).
+4. Voice notes use **Cloudinary** (not Firebase Storage) — see section 5 below.
 5. **Project settings → General → Your apps → Web app (`</>`)** → register, then
    copy the `firebaseConfig` values.
 
@@ -76,22 +76,31 @@ service cloud.firestore {
 }
 ```
 
-**Storage** (Storage → Rules):
-
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /groups/{gid}/voice/{file} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
-
 > These are sensible starter rules (any signed-in member of a group can act in
 > it). Tighten role-based writes further if you want, e.g. only Owner/Admin may
 > edit `members`.
+
+## 3b. Cloudinary (voice-note storage)
+
+Voice notes are uploaded straight from the browser to Cloudinary (no server,
+no secret exposed):
+
+1. Create a free account at [cloudinary.com](https://cloudinary.com).
+2. Dashboard → note your **Cloud name**.
+3. **Settings → Upload → Upload presets → Add upload preset** → set
+   **Signing Mode: Unsigned** → Save → copy the preset **name**.
+4. Put both into `js/firebase-config.js`:
+
+```js
+window.CYCLESCREEN_CLOUDINARY = {
+  cloudName: "your-cloud-name",
+  uploadPreset: "your-unsigned-preset",
+};
+```
+
+Audio is stored under `cyclescreen/voice/<groupId>/…`; the resulting URL is
+saved on the chat message in Firestore so it plays back on every device.
+(Text/emoji/groups work without Cloudinary — only voice needs it.)
 
 ## 4. Authorize your domain
 

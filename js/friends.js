@@ -48,7 +48,10 @@ const Friends = (() => {
     },
     async postMessage(gid, msg, blob) {
       if (cloud()) {
-        if (blob) msg = { ...msg, audioUrl: await Cloud.uploadVoice(gid, blob) };
+        if (blob) {
+          try { msg = { ...msg, audioUrl: await Cloud.uploadVoice(gid, blob) }; }
+          catch (e) { App.toast('🎤 Voice upload failed — set up Cloudinary in config'); return; }
+        }
         return Cloud.sendMessage(gid, msg);
       }
       const m = GD.me(); const full = { id: 'm' + Date.now(), fromYou: true, fromName: m.name, ts: Date.now(), ...msg };

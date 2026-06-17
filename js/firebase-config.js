@@ -16,3 +16,13 @@ window.CYCLESCREEN_FIREBASE = {
   appId: "1:992245903526:web:544a091caa3cc3c6d30467",
   measurementId: "G-T385DV2Q4Q",
 };
+
+/* Cloudinary — used for media storage (voice notes, etc.) via unsigned uploads.
+ * Create an UNSIGNED upload preset: Cloudinary console → Settings → Upload →
+ * Upload presets → Add → Signing Mode: Unsigned. Put its name + your cloud name
+ * below. (Unsigned uploads are safe from the browser; no API secret is exposed.)
+ */
+window.CYCLESCREEN_CLOUDINARY = {
+  cloudName: "",      // e.g. "dxxxxxx"  (Cloudinary dashboard → "Cloud name")
+  uploadPreset: "",   // the unsigned upload preset name
+};

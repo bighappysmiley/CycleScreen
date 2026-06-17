@@ -5,6 +5,7 @@ const Settings = (() => {
   function render(host) {
     const p = Store.get('profile');
     const par = Store.get('parental');
+    const sec = Store.get('security');
     host.innerHTML = `<div class="settings-pad">
       <div class="profile-head">
         <div class="avatar">${p.initials}</div>
@@ -66,7 +67,21 @@ const Settings = (() => {
           <div class="lr-main"><div class="lr-title">Restrict Friends</div></div>
           <label class="switch"><input type="checkbox" id="par-friends" ${par.blockFriends?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
         <div class="list-row" id="par-pin"><div class="lr-icon" style="background:#8e8e93">🔑</div>
-          <div class="lr-main"><div class="lr-title">${par.pin?'Change':'Set'} PIN</div></div><div class="lr-trail">›</div></div>
+          <div class="lr-main"><div class="lr-title">${par.pin?'Change':'Set'} Parental PIN</div><div class="lr-sub">Separate from your lock passcode</div></div><div class="lr-trail">›</div></div>
+      </div>
+
+      <div class="list-section-title">Security &amp; Anti-Theft</div>
+      <div class="list">
+        <div class="list-row" id="lock-pin"><div class="lr-icon" style="background:#1c1c1e;border:1px solid var(--hairline)">🔒</div>
+          <div class="lr-main"><div class="lr-title">${sec.lockPin?'Change':'Set'} Lock Passcode</div><div class="lr-sub">Required to unlock the screen & cancel the alarm</div></div><div class="lr-trail">›</div></div>
+        <div class="list-row" id="lock-now-row"><div class="lr-icon" style="background:#48484a">⏏︎</div>
+          <div class="lr-main"><div class="lr-title">Lock Now</div><div class="lr-sub">Manual lock — no automatic locking</div></div><div class="lr-trail">›</div></div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff453a">🚨</div>
+          <div class="lr-main"><div class="lr-title">Anti-Theft Alarm</div><div class="lr-sub">Siren if the bike is moved while armed</div></div>
+          <label class="switch"><input type="checkbox" id="sec-alarm" ${sec.alarmArmed?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">📍</div>
+          <div class="lr-main"><div class="lr-title">Trigger Distance</div><div class="lr-sub">Ignore GPS drift / wind below this</div></div>
+          <div class="lr-trail"><input class="field" id="sec-thresh" type="number" min="5" style="width:60px;margin:0;padding:7px;text-align:center" value="${sec.alarmThresholdM}"> m</div></div>
       </div>
 
       <div class="list-section-title">About</div>
@@ -120,12 +135,28 @@ const Settings = (() => {
       });
     };
 
-    // parental
-    host.querySelector('#par-en').onchange = (e) => Store.set('parental.enabled', e.target.checked);
+    // parental — disabling controls requires the parental PIN (if set)
+    host.querySelector('#par-en').onchange = (e) => {
+      if (!e.target.checked && par.pin) {
+        e.target.checked = true; // revert until verified
+        Security.verify(par.pin, 'Parental Controls', () => { Store.set('parental.enabled', false); render(host); });
+        return;
+      }
+      Store.set('parental.enabled', e.target.checked);
+    };
     host.querySelector('#par-speed').onchange = (e) => Store.set('parental.maxSpeedAlert', +e.target.value || 30);
     host.querySelector('#par-music').onchange = (e) => { Store.set('parental.blockMusic', e.target.checked); App.refreshDrawer(); };
     host.querySelector('#par-friends').onchange = (e) => { Store.set('parental.blockFriends', e.target.checked); App.refreshDrawer(); };
-    host.querySelector('#par-pin').onclick = () => setPinSheet();
+    host.querySelector('#par-pin').onclick = () => setPinSheet('parental.pin', 'Parental PIN', () => render(host));
+
+    // security & anti-theft
+    host.querySelector('#lock-pin').onclick = () => setPinSheet('security.lockPin', 'Lock Passcode', () => render(host));
+    host.querySelector('#lock-now-row').onclick = () => Security.lockNow();
+    host.querySelector('#sec-alarm').onchange = (e) => {
+      const ok = e.target.checked ? Security.arm() : (Security.disarm(), true);
+      if (e.target.checked && !ok) e.target.checked = false; // arming failed (no lock pin)
+    };
+    host.querySelector('#sec-thresh').onchange = (e) => Store.set('security.alarmThresholdM', Math.max(5, +e.target.value || 20));
   }
 
   function editField(label, key, after) {
@@ -182,16 +213,22 @@ const Settings = (() => {
     });
   }
 
-  function setPinSheet() {
-    App.sheet('Set 4-digit PIN', `
-      <input class="field" id="pin1" inputmode="numeric" maxlength="4" placeholder="New PIN">
-      <input class="field" id="pin2" inputmode="numeric" maxlength="4" placeholder="Confirm PIN">
-      <button class="btn btn--block" id="pingo">Save PIN</button>`, (root, close) => {
+  function setPinSheet(path = 'parental.pin', title = 'PIN', after) {
+    const existing = Store.get(path);
+    App.sheet(`Set ${title}`, `
+      <input class="field" id="pin1" inputmode="numeric" maxlength="4" placeholder="New 4-digit ${title}">
+      <input class="field" id="pin2" inputmode="numeric" maxlength="4" placeholder="Confirm ${title}">
+      <div style="display:flex;gap:8px">
+        <button class="btn btn--block" id="pingo">Save</button>
+        ${existing ? '<button class="btn btn--block btn--ghost" id="pinclr" style="flex:0 0 90px">Remove</button>' : ''}
+      </div>`, (root, close) => {
       root.querySelector('#pingo').onclick = () => {
         const a = root.querySelector('#pin1').value, b = root.querySelector('#pin2').value;
-        if (a.length !== 4 || a !== b) return App.toast('PINs must match (4 digits)');
-        Store.set('parental.pin', a); close(); App.toast('PIN saved');
+        if (!/^\d{4}$/.test(a) || a !== b) return App.toast('PINs must match (4 digits)');
+        Store.set(path, a); close(); App.toast(`${title} saved`); after && after();
       };
+      const clr = root.querySelector('#pinclr');
+      if (clr) clr.onclick = () => { Store.set(path, ''); close(); App.toast(`${title} removed`); after && after(); };
     });
   }
 

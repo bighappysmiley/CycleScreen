@@ -20,7 +20,8 @@ themes, and PIN-protected parental controls.
 - **24six music** — now-playing pill on the dashboard, full player with playlist, shuffle/repeat.
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.
 - **Settings** — light/dark theme, accent color, profile, units (km/h ↔ mph), Bluetooth pairing, quick-dial editor.
-- **Parental controls** — enable a 4-digit PIN lock, set a speed alert, and restrict the Music / Friends apps.
+- **Parental controls** — a 4-digit **parental PIN** (separate from the lock passcode) gates the restrictions: speed alert and Music / Friends app limits.
+- **Security & anti-theft** — a separate **lock passcode** that locks the screen on demand (manual only — no auto-lock; stays locked across reboots), and a **GPS anti-theft alarm**: arm it, and if the bike is moved beyond a set distance (so wind/GPS drift won't false-trigger) it sounds a siren that can only be silenced with the lock passcode.
 
 ## Run it (any computer)
 

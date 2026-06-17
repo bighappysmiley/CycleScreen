@@ -117,8 +117,18 @@
 .keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:280px; margin: 0 auto; }
 .keypad button { aspect-ratio:1; border-radius:50%; background: var(--fill-2); font-size:24px; font-weight:500; }
 .keypad button:active { background: var(--fill); }
-.locked-overlay { position:fixed; inset:0; z-index:1800; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:30px; }
+.locked-overlay { position:fixed; inset:0; z-index:1850; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:30px; transition:opacity .3s; }
 .locked-overlay .lock-emoji { font-size:46px; }
+.lock-cancel { margin-top:14px; color:var(--accent); font-size:14px; font-weight:600; padding:8px 18px; }
+
+/* anti-theft alarm: flashing red, on top of everything */
+.alarm-overlay { z-index:2100; color:#fff; background:#2a0000; animation: alarmflash .7s steps(1) infinite; }
+.alarm-overlay .lock-emoji { animation: alarmshake .35s ease-in-out infinite; }
+.alarm-overlay .keypad button { background: rgba(255,255,255,.12); color:#fff; }
+.alarm-overlay .pin-dots .d { border-color:#fff; }
+.alarm-overlay .pin-dots .d.on { background:#fff; }
+@keyframes alarmflash { 0%{background:#2a0000} 50%{background:#b00000} 100%{background:#2a0000} }
+@keyframes alarmshake { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(12deg)} }
 .swatch-row { display:flex; gap:12px; padding:6px 2px; }
 .swatch { width:34px; height:34px; border-radius:50%; border:3px solid transparent; }
 .swatch.sel { border-color: var(--text); }

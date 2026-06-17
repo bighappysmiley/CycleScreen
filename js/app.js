@@ -138,30 +138,6 @@ const App = (() => {
   }
 
   /* ---- parental lock gate on boot ---- */
-  function maybeLock() {
-    const par = Store.get('parental');
-    if (!par.enabled || !par.pin) return;
-    const ov = document.createElement('div'); ov.className = 'locked-overlay';
-    ov.innerHTML = `<div class="lock-emoji">🔒</div><div style="font-size:18px;font-weight:700">CycleScreen Locked</div>
-      <div style="color:var(--text-2);font-size:13px">Enter parental PIN</div>
-      <div class="pin-dots">${'<span class="d"></span>'.repeat(4)}</div>
-      <div class="keypad">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k) => `<button data-k="${k}" ${k===''?'style="visibility:hidden"':''}>${k}</button>`).join('')}</div>`;
-    document.body.append(ov);
-    let entry = '';
-    const dots = ov.querySelectorAll('.pin-dots .d');
-    const paint = () => dots.forEach((d, i) => d.classList.toggle('on', i < entry.length));
-    ov.querySelectorAll('.keypad button').forEach((b) => b.onclick = () => {
-      const k = b.dataset.k;
-      if (k === '⌫') entry = entry.slice(0, -1);
-      else if (entry.length < 4) entry += k;
-      paint();
-      if (entry.length === 4) {
-        if (entry === par.pin) { ov.style.opacity = 0; setTimeout(() => ov.remove(), 300); }
-        else { ov.querySelector('.pin-dots').animate([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:300}); entry=''; setTimeout(paint, 60); }
-      }
-    });
-  }
-
   function init() {
     // restore prefs
     setTheme(Store.get('theme'));
@@ -204,19 +180,12 @@ const App = (() => {
       else if (t === 'apps') { drawerOpen ? closeDrawer() : openDrawer(); }
       else if (t === 'theme') setTheme(Store.get('theme') === 'dark' ? 'light' : 'dark');
       else if (t === 'settings') open('settings');
-      else if (t === 'lock') lockNow();
+      else if (t === 'lock') Security.lockNow();
     });
   }
 
   function setTab(t) {
     document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
-  }
-
-  function lockNow() {
-    const par = Store.get('parental');
-    if (!par.pin) return App.toast('Set a passcode in Settings to enable lock');
-    Store.set('parental.enabled', true);
-    maybeLock();
   }
 
   function boot() {
@@ -225,10 +194,9 @@ const App = (() => {
     setAccent(Store.get('accent'));
     I18n.set(Store.get('language') || 'en');
     init();
+    Security.init();
     if (!Store.get('onboarded')) {
-      Onboarding.start(() => { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); maybeLock(); });
-    } else {
-      maybeLock();
+      Onboarding.start(() => { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); });
     }
   }
 

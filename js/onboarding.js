@@ -59,7 +59,7 @@ const Onboarding = (() => {
           <span class="at">@</span>
           <input class="field" id="onb-user" placeholder="${I18n.t('username')}" autocomplete="off" />
         </div>
-        <input class="field" id="onb-pass" type="password" inputmode="numeric" maxlength="6" placeholder="${I18n.t('passcode')}" />
+        <input class="field" id="onb-pass" type="password" inputmode="numeric" maxlength="4" placeholder="${I18n.t('passcode')}" />
       </div>
       <p class="onb-hint">${I18n.t('login_hint')}</p>
       <button class="btn btn--block btn--pill onb-cta" id="onb-go">${I18n.t('get_started')}</button>
@@ -75,9 +75,10 @@ const Onboarding = (() => {
       const name = nameEl.value.trim() || 'Rider';
       const username = (userEl.value.trim() || 'rider').replace(/^@/, '');
       const initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+      const pass = root.querySelector('#onb-pass').value.trim();
       Store.update((d) => {
         d.profile.name = name; d.profile.username = username; d.profile.initials = initials;
-        d.parental.pin = root.querySelector('#onb-pass').value.trim() || d.parental.pin;
+        if (/^\d{4}$/.test(pass)) d.security.lockPin = pass; // device lock passcode
         d.onboarded = true;
       });
       finish();

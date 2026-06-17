@@ -19,6 +19,7 @@ const Store = (() => {
       { id: 'c3', type: 'distance', title: 'Weekly 100',     meta: '100 km this week', joined: true,  distance: 100 },
     ],
     parental: { enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false, curfewEnd: '' },
+    security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
     music: { volume: 0.7, shuffle: false, repeat: false },
     lastRide: null, // { date, distanceKm, durationSec, avgKmh }
   };

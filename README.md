@@ -48,9 +48,30 @@ live speed, weather). On the Pi it automatically uses real signals:
 |-------------------|---------------------------------------------------------|------------------|
 | GPS (GLONASS)     | `navigator.geolocation` (via `gpsd` → `geoclue`)        | Simulated track  |
 | Speed / heading   | GPS-derived                                             | Simulated        |
-| Phone / quick dial| **Web Bluetooth** (`navigator.bluetooth`), HFP calling  | Simulated pairing|
+| Phone / quick dial| `tel:` handoff to a Bluetooth-paired phone (HFP)        | Opens dialer if present |
 | Weather           | Open-Meteo API at your live coordinates                 | Sensible default |
 | Battery           | `navigator.getBattery()`                                | Simulated drain  |
+
+### Bluetooth phone calling (quick dial)
+
+Quick-dial contacts fire a `tel:` link. For that to actually ring through the
+phone paired to the Pi, the Pi's Linux side needs a Bluetooth **Hands-Free
+Profile (HFP)** handler that catches `tel:` — Chromium only hands the number
+off; it can't drive the call itself. Typical setup:
+
+1. Pair the phone over Bluetooth (`bluetoothctl`) and enable HFP.
+2. Install an HFP/telephony stack — e.g. **oFono + GNOME Calls**, or
+   **bluez** with `hsphfpd` — so the Pi can place calls through the phone.
+3. Register that app as the `tel:` URL handler (e.g. via `xdg-mime default`),
+   so tapping a contact in CycleScreen dials on the paired phone.
+
+### 24six music
+
+24six has no public/embeddable API, so the Music app embeds `https://24six.app`
+in an iframe and falls back to an **Open 24six ↗** launch button. Whether the
+embed renders is up to 24six's own `X-Frame-Options` / CSP `frame-ancestors`
+headers — if they block framing (as most streaming apps do), the launch button
+opens the real app instead.
 
 ### Google Maps
 

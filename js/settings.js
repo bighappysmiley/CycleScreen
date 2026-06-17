@@ -1,6 +1,7 @@
 /* settings.js — appearance, profile, quick-dial, parental controls, about. */
 const Settings = (() => {
   const accents = ['#0a84ff','#30d158','#ff375f','#bf5af2','#ff9f0a','#64d2ff'];
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let parentalUnlocked = false;            // unlocked for the current Settings visit
   function lockParental() { parentalUnlocked = false; }
   // True when parental changes must be PIN-verified first.
@@ -168,14 +169,16 @@ const Settings = (() => {
     btSync();
     const gpsLabel = () => {
       const s = Device.state;
+      const man = Store.get('manualLocation');
       const el = host.querySelector('#about-gps'); if (!el) return;
-      el.textContent = !s.hasFix ? 'Locating…'
-        : s.simulated ? 'Simulated (tap to use real GPS)'
+      el.textContent = man ? `Set manually: ${man.label}`
+        : !s.hasFix ? 'Locating…'
+        : s.simulated ? 'Simulated (using GPS)'
         : `Live${s.accuracy ? ' · ±' + Math.round(s.accuracy) + 'm' : ''}`;
     };
     gpsLabel();
     Device.on('gps', gpsLabel); Device.on('gpsstatus', gpsLabel);
-    host.querySelector('#gps-row').onclick = () => { App.toast('📍 Requesting location…'); Device.retryLocation(); };
+    host.querySelector('#gps-row').onclick = () => locationSheet(() => render(host));
 
     const signoutRow = host.querySelector('#signout-row');
     if (signoutRow) signoutRow.onclick = async () => { await Cloud.signOut(); Store.set('onboarded', false); location.reload(); };
@@ -283,6 +286,40 @@ const Settings = (() => {
       if (e.target.checked && !ok) e.target.checked = false; // arming failed (no lock pin)
     };
     host.querySelector('#sec-thresh').onchange = (e) => Store.set('security.alarmThresholdM', Math.max(5, +e.target.value || 20));
+  }
+
+  // Set location manually (fixes wrong IP/VPN geolocation) or fall back to GPS.
+  function locationSheet(after) {
+    const man = Store.get('manualLocation');
+    App.sheet('Location', `
+      <p style="font-size:12px;color:var(--text-2);margin:0 4px 10px">${man ? 'Pinned to <b>' + esc(man.label) + '</b>.' : 'On a VPN or without a GPS dongle, your location can be wrong. Search your city/place to set it.'}</p>
+      <input class="field" id="loc-q" placeholder="Search city or place…" autocapitalize="words" />
+      <div class="user-results" id="loc-results"></div>
+      <button class="btn btn--block btn--ghost" id="loc-gps">Use GPS / auto-locate</button>`, (root, close) => {
+      const q = root.querySelector('#loc-q'), results = root.querySelector('#loc-results');
+      let t;
+      q.oninput = () => {
+        clearTimeout(t);
+        const term = q.value.trim();
+        if (term.length < 3) { results.innerHTML = ''; return; }
+        t = setTimeout(async () => {
+          let list = [];
+          try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&q=${encodeURIComponent(term)}`, { headers: { 'Accept-Language': I18n.current() } });
+            list = await r.json();
+          } catch {}
+          results.innerHTML = list.length ? list.map((p, i) => `
+            <button class="user-result" data-i="${i}"><div class="lr-main"><div class="lr-title" style="font-size:14px">${esc(p.display_name.split(',')[0])}</div><div class="lr-sub">${esc(p.display_name)}</div></div></button>`).join('')
+            : '<div class="empty" style="padding:10px;font-size:12px">No matches</div>';
+          results.querySelectorAll('.user-result').forEach((b) => b.onclick = () => {
+            const p = list[+b.dataset.i];
+            Device.setManualLocation(+p.lat, +p.lon, p.display_name.split(',')[0]);
+            MapView.recenter(); close(); App.toast('📍 Location set'); after && after();
+          });
+        }, 300);
+      };
+      root.querySelector('#loc-gps').onclick = () => { Device.clearManualLocation(); close(); App.toast('📍 Using GPS'); after && after(); };
+    });
   }
 
   function editField(label, key, after) {

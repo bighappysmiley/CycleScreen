@@ -29,12 +29,41 @@ const Device = (() => {
   let simTimer = null, fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false;
 
   function startGPS() {
+    // A user-set manual location wins over (often VPN-skewed) browser geolocation.
+    const man = (typeof Store !== 'undefined') && Store.get('manualLocation');
+    if (man) { applyManual(man, false); return; }
     if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); simulateGPS(); return; }
     if (!window.isSecureContext) { emit('gpsstatus', { state: 'insecure' }); App.toast && App.toast('⚠️ Location needs HTTPS'); }
     if (window.self !== window.top) emit('gpsstatus', { state: 'iframe' });
     requestLocation();
     // Fall back to simulation only if NOTHING (real or error) arrives in time.
     fallbackTimer = setTimeout(() => { if (!state.hasFix) { emit('gpsstatus', { state: 'slow' }); simulateGPS(); } }, 9000);
+  }
+
+  function stopWatch() {
+    stopSim();
+    clearTimeout(fallbackTimer);
+    if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+
+  // Pin the rider to a manually chosen place (used when GPS/VPN is wrong).
+  function applyManual(man, persist = true) {
+    stopWatch();
+    if (persist) Store.set('manualLocation', man);
+    state.coords = { lat: man.lat, lng: man.lng };
+    state.manual = true; state.simulated = false; state.hasFix = true; state.speedKmh = 0;
+    state.accuracy = 0;
+    emit('gps', { ...state });
+    emit('gpsstatus', { state: 'manual', label: man.label });
+    fetchWeather();
+  }
+  function setManualLocation(lat, lng, label) { applyManual({ lat, lng, label: label || 'Set location' }); }
+  function clearManualLocation() {
+    state.manual = false;
+    if (typeof Store !== 'undefined') Store.set('manualLocation', null);
+    lastReal = 0; triedLowAccuracy = false;
+    startGPS();
   }
 
   // (Re)request location: a fast one-shot fix, plus a continuous high-accuracy watch.
@@ -46,6 +75,7 @@ const Device = (() => {
   }
 
   function onRealFix(pos) {
+    if (state.manual) return; // a manual location override is active
     stopSim();
     clearTimeout(fallbackTimer);
     const firstFix = lastReal === 0;
@@ -83,7 +113,10 @@ const Device = (() => {
   }
 
   // Called from the UI to (re)prompt for location, e.g. after enabling permission.
-  function retryLocation() { triedLowAccuracy = false; clearTimeout(fallbackTimer); requestLocation(); }
+  function retryLocation() {
+    if (state.manual) return clearManualLocation();
+    triedLowAccuracy = false; clearTimeout(fallbackTimer); requestLocation();
+  }
 
   function haversineKm(a, b) {
     const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
@@ -191,5 +224,5 @@ const Device = (() => {
     setInterval(fetchWeather, 10 * 60 * 1000);
   }
 
-  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather, retryLocation };
+  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather, retryLocation, setManualLocation, clearManualLocation };
 })();

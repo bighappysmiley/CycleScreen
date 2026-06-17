@@ -75,13 +75,14 @@ const App = (() => {
     f.style.width = Math.round(level * 100) + '%';
     f.style.background = level < 0.2 ? 'var(--danger)' : level < 0.4 ? 'var(--warn)' : 'var(--accent-2)';
   }
-  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.hasFix ? (s.simulated ? 'SIM' : s.satellites) : '…'; }
+  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.manual ? 'SET' : s.hasFix ? (s.simulated ? 'SIM' : s.satellites) : '…'; }
 
   let warnedDenied = false;
   function onGpsStatus(st) {
     const chip = document.getElementById('status-gps');
     chip.classList.remove('gps-live', 'gps-sim', 'gps-bad');
-    if (st.state === 'live') { chip.classList.add('gps-live'); warnedDenied = false; }
+    if (st.state === 'manual') { chip.classList.add('gps-live'); document.getElementById('gps-sats').textContent = 'SET'; warnedDenied = false; }
+    else if (st.state === 'live') { chip.classList.add('gps-live'); warnedDenied = false; }
     else if (st.state === 'locating') { document.getElementById('gps-sats').textContent = '…'; }
     else if (['denied', 'insecure', 'iframe', 'unsupported'].includes(st.state)) {
       chip.classList.add('gps-bad');

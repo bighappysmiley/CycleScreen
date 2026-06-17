@@ -8,7 +8,10 @@ const Settings = (() => {
     const sec = Store.get('security');
     host.innerHTML = `<div class="settings-pad">
       <div class="profile-head">
-        <button class="avatar avatar-edit" id="pf-avatar" title="Change photo">${p.photo ? `<img src="${p.photo}" alt="">` : (p.initials || '👤')}<span class="avatar-cam">📷</span></button>
+        <div class="avatar-wrap">
+          <button class="avatar avatar-edit" id="pf-avatar" title="Change photo">${p.photo ? `<img src="${p.photo}" alt="">` : (p.initials || '👤')}</button>
+          <span class="avatar-cam">📷</span>
+        </div>
         <input type="file" id="pf-photo" accept="image/*" hidden />
         <div class="pname">${p.name}</div>
         <div class="puser">@${p.username}</div>

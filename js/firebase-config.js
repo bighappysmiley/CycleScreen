@@ -8,10 +8,11 @@
  * no accounts/sync). See pi/FIREBASE.md for full setup + security rules.
  */
 window.CYCLESCREEN_FIREBASE = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
+  apiKey: "AIzaSyBAdlSAfsdW-zDzcAwQ7CJKhO0xlUXITdQ",
+  authDomain: "cyclescreen-v2.firebaseapp.com",
+  projectId: "cyclescreen-v2",
+  storageBucket: "cyclescreen-v2.firebasestorage.app",
+  messagingSenderId: "992245903526",
+  appId: "1:992245903526:web:544a091caa3cc3c6d30467",
+  measurementId: "G-T385DV2Q4Q",
 };

@@ -96,6 +96,9 @@ const App = (() => {
         }[st.state];
         toast(msg);
       }
+    } else if (st.state === 'coarse') {
+      chip.classList.add('gps-sim');
+      if (!warnedDenied) { warnedDenied = true; toast('📍 Approximate location (no GPS). Set it in Settings → Location, or connect the GPS dongle.'); }
     } else if (st.state === 'slow' || st.state === 'timeout' || st.state === 'unavailable') {
       chip.classList.add('gps-sim');
     }

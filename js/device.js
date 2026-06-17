@@ -74,13 +74,26 @@ const Device = (() => {
     watchId = navigator.geolocation.watchPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 1000, timeout: 27000 });
   }
 
+  // Fixes coarser than this (metres) are almost certainly IP/Wi-Fi geolocation
+  // (e.g. a VPN exit), NOT the GPS dongle — don't let them drive navigation.
+  const COARSE_M = 150;
+
   function onRealFix(pos) {
-    if (state.manual) return; // a manual location override is active
+    const c = pos.coords;
+    const accurate = c.accuracy != null && c.accuracy <= COARSE_M;
+    if (state.manual) {
+      // Real GPS (accurate) takes over for navigation; a coarse IP/VPN fix does not.
+      if (!accurate) return;
+      state.manual = false;
+      if (typeof Store !== 'undefined') Store.set('manualLocation', null);
+    } else if (!accurate && !state.hasFix) {
+      // First fix is coarse → show it but flag as approximate so the rider knows.
+      emit('gpsstatus', { state: 'coarse', accuracy: c.accuracy });
+    }
     stopSim();
     clearTimeout(fallbackTimer);
     const firstFix = lastReal === 0;
     lastReal = Date.now();
-    const c = pos.coords;
     if (c.speed != null && !Number.isNaN(c.speed)) state.speedKmh = Math.max(0, c.speed * 3.6);
     else if (state.lastCoords) {
       const d = haversineKm(state.lastCoords, { lat: c.latitude, lng: c.longitude });

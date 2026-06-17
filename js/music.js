@@ -55,27 +55,15 @@ const Music = (() => {
   // headers so it loads inside CycleScreen. The app screen's top bar keeps a
   // Back button, so the rider never gets stranded — no new tab is opened.
   const PROXY_24SIX = '/24six/';
-  const DIRECT_24SIX = 'https://24six.app';
   function render(host) {
+    // The proxy strips 24six's framing headers, so the iframe renders the real
+    // 24six full-bleed inside the kiosk. The app bar's Back button returns to
+    // CycleScreen — no new tab, no spurious fallback.
     host.innerHTML = `
       <div class="t24-wrap">
         <iframe class="t24-frame" id="t24-frame" src="${PROXY_24SIX}"
                 allow="autoplay; encrypted-media; microphone; clipboard-write; fullscreen"></iframe>
-        <div class="t24-fallback" id="t24-fallback" hidden>
-          <div style="font-size:48px">🎵</div>
-          <h3 style="margin:6px 0">24six couldn't load in-frame</h3>
-          <p style="color:var(--text-2);max-width:340px;margin:0 auto 14px">
-            The proxy reached 24six but it isn't rendering. Tap retry, or use the
-            Back button (top-left) to return to CycleScreen.</p>
-          <button class="btn btn--pill" id="t24-retry" style="background:linear-gradient(135deg,#bf5af2,#ff375f)">Retry</button>
-        </div>
       </div>`;
-
-    const frame = host.querySelector('#t24-frame');
-    let loaded = false;
-    frame.addEventListener('load', () => { loaded = true; host.querySelector('#t24-fallback').hidden = true; frame.style.display = ''; });
-    setTimeout(() => { if (!loaded) { frame.style.display = 'none'; host.querySelector('#t24-fallback').hidden = false; } }, 6000);
-    host.querySelector('#t24-retry').onclick = () => render(host);
   }
 
   function paintPlay(host) {

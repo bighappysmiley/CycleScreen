@@ -22,7 +22,7 @@ themes, and PIN-protected parental controls.
 - **Quick-dial calling** — each contact dials via the platform's `tel:` handler (connected phone / cellular / VoIP softphone).
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.
 - **Settings** — light/dark theme, accent color, profile, units (km/h ↔ mph), Bluetooth pairing, quick-dial editor.
-- **Parental controls** — a 4-digit **parental PIN** (separate from the lock passcode) gates the restrictions: speed alert and Music / Friends app limits.
+- **Parental controls** (opt-in toggle) — a 4-digit **parental PIN** gates the restrictions: **BikeTime** downtime windows ("Come back soon" until a set time, PIN-bypassable), speed alert, allowed **music services**, Music/Friends app limits, and **per-group messaging** permissions.
 - **Security & anti-theft** — a separate **lock passcode** that locks the screen on demand (manual only — no auto-lock; stays locked across reboots), and a **GPS anti-theft alarm**: arm it, and if the bike is moved beyond a set distance (so wind/GPS drift won't false-trigger) it sounds a siren that can only be silenced with the lock passcode.
 
 ## Run it (any computer)

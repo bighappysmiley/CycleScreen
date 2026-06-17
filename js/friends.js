@@ -206,17 +206,23 @@ const Friends = (() => {
   }
 
   /* ---- chat ---- */
+  function msgBlocked(gid) {
+    return Store.get('parental.enabled') && (Store.get('parental.msgBlockedGroups') || []).includes(gid);
+  }
   function renderChat(body, g) {
+    const blocked = msgBlocked(g.id);
     body.innerHTML = `
       <div class="chat-log" id="chat-log">${g.messages.length ? g.messages.map(renderMsg).join('') : '<div class="empty">No messages yet. Say hi 👋</div>'}</div>
+      ${blocked ? `<div class="empty" style="padding:12px">🔒 Messaging in this group is restricted by Parental Controls.</div>` : `
       <div class="chip-row">${EMOJIS.map((e) => `<button class="emoji-chip" data-e="${e}">${e}</button>`).join('')}</div>
       <div class="chat-compose">
         <input class="field" id="chat-input" placeholder="Message…" style="margin:0;flex:1">
         <button class="chat-send" id="chat-send">➤</button>
         <button class="voice-btn" id="vbtn"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
-      <div class="wave" id="wave" hidden>${'<i></i>'.repeat(20)}<span id="vtime" style="margin-left:8px;color:var(--danger);font-weight:600">0:00</span></div>`;
+      <div class="wave" id="wave" hidden>${'<i></i>'.repeat(20)}<span id="vtime" style="margin-left:8px;color:var(--danger);font-weight:600">0:00</span></div>`}`;
     const log = body.querySelector('#chat-log'); log.scrollTop = log.scrollHeight;
+    if (blocked) return;
     body.querySelectorAll('.emoji-chip').forEach((c) => c.onclick = () => GD.postMessage(g.id, { type: 'emoji', text: c.dataset.e }));
     const input = body.querySelector('#chat-input');
     const send = () => { const t = input.value.trim(); if (!t) return; input.value = ''; GD.postMessage(g.id, { type: 'text', text: t }); };
@@ -292,5 +298,7 @@ const Friends = (() => {
   function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
   function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-  return { render };
+  function knownGroups() { return GD.groups().map((g) => ({ id: g.id, name: g.name })); }
+
+  return { render, knownGroups };
 })();

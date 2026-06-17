@@ -74,12 +74,21 @@ const Settings = (() => {
         <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">⚡</div>
           <div class="lr-main"><div class="lr-title">Speed Alert</div><div class="lr-sub">Warn above limit</div></div>
           <div class="lr-trail"><input class="field" id="par-speed" type="number" style="width:64px;margin:0;padding:7px;text-align:center" value="${par.maxSpeedAlert}"> km/h</div></div>
+        <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">🌙</div>
+          <div class="lr-main"><div class="lr-title">BikeTime (Downtime)</div><div class="lr-sub" id="bt-sub-row">Off</div></div>
+          <div class="lr-trail" id="par-biketime">Edit ›</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#bf5af2">🎵</div>
-          <div class="lr-main"><div class="lr-title">Restrict Music</div></div>
+          <div class="lr-main"><div class="lr-title">Restrict Music</div><div class="lr-sub">Block the Music app entirely</div></div>
           <label class="switch"><input type="checkbox" id="par-music" ${par.blockMusic?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">🎧</div>
+          <div class="lr-main"><div class="lr-title">Music Services</div><div class="lr-sub" id="ms-sub">Choose allowed services</div></div>
+          <div class="lr-trail" id="par-services">Edit ›</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#5856d6">👥</div>
-          <div class="lr-main"><div class="lr-title">Restrict Friends</div></div>
+          <div class="lr-main"><div class="lr-title">Restrict Friends</div><div class="lr-sub">Block the Friends app entirely</div></div>
           <label class="switch"><input type="checkbox" id="par-friends" ${par.blockFriends?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
+        <div class="list-row"><div class="lr-icon" style="background:#0a84ff">💬</div>
+          <div class="lr-main"><div class="lr-title">Group Messaging</div><div class="lr-sub" id="gm-sub">Choose which groups can be messaged</div></div>
+          <div class="lr-trail" id="par-groups">Edit ›</div></div>
         <div class="list-row" id="par-pin"><div class="lr-icon" style="background:#8e8e93">🔑</div>
           <div class="lr-main"><div class="lr-title">${par.pin?'Change':'Set'} Parental PIN</div><div class="lr-sub">Separate from your lock passcode</div></div><div class="lr-trail">›</div></div>
       </div>
@@ -205,6 +214,60 @@ const Settings = (() => {
     host.querySelector('#par-music').onchange = (e) => { Store.set('parental.blockMusic', e.target.checked); App.refreshDrawer(); };
     host.querySelector('#par-friends').onchange = (e) => { Store.set('parental.blockFriends', e.target.checked); App.refreshDrawer(); };
     host.querySelector('#par-pin').onclick = () => setPinSheet('parental.pin', 'Parental PIN', () => render(host));
+
+    // BikeTime (downtime window)
+    const bt = par.bikeTime || { enabled: false, start: '21:00', end: '07:00' };
+    host.querySelector('#bt-sub-row').textContent = bt.enabled ? `${bt.start}–${bt.end}` : 'Off';
+    host.querySelector('#par-biketime').onclick = () => {
+      App.sheet('BikeTime', `
+        <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">Enable BikeTime</div><div class="lr-sub">Block use during the window below</div></div>
+          <label class="switch"><input type="checkbox" id="bt-en" ${bt.enabled?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <label style="flex:1;font-size:12px;color:var(--text-2)">From<input class="field" id="bt-start" type="time" value="${bt.start}" style="margin-top:4px"></label>
+          <label style="flex:1;font-size:12px;color:var(--text-2)">Until<input class="field" id="bt-end" type="time" value="${bt.end}" style="margin-top:4px"></label>
+        </div>
+        <p style="font-size:12px;color:var(--text-2);margin:10px 4px">During this window the screen shows "Come back soon". ${par.pin ? 'You can bypass with the parental PIN.' : 'Set a parental PIN to allow bypass.'}</p>
+        <button class="btn btn--block" id="bt-save">Save</button>`, (root, close) => {
+        root.querySelector('#bt-save').onclick = () => {
+          Store.set('parental.bikeTime', { enabled: root.querySelector('#bt-en').checked, start: root.querySelector('#bt-start').value || '21:00', end: root.querySelector('#bt-end').value || '07:00' });
+          close(); render(host);
+        };
+      });
+    };
+
+    // Music services allow-list
+    const ms = par.musicServices || { '24six': true, apple: true, spotify: true };
+    host.querySelector('#ms-sub').textContent = Object.keys(ms).filter((k) => ms[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
+    host.querySelector('#par-services').onclick = () => {
+      const svcs = [['24six', '24six'], ['apple', 'Apple Music'], ['spotify', 'Spotify']];
+      App.sheet('Music Services', svcs.map(([id, name]) => `
+        <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">${name}</div></div>
+          <label class="switch"><input type="checkbox" data-svc="${id}" ${ms[id] !== false ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></label></div>`).join(''),
+      (root, close) => {
+        root.querySelectorAll('input[data-svc]').forEach((inp) => inp.onchange = () => {
+          const cur = Store.get('parental.musicServices') || {};
+          Store.set('parental.musicServices', { ...cur, [inp.dataset.svc]: inp.checked });
+          host.querySelector('#ms-sub').textContent = Object.keys(Store.get('parental.musicServices')).filter((k) => Store.get('parental.musicServices')[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
+        });
+      });
+    };
+
+    // Group messaging allow-list
+    host.querySelector('#par-groups').onclick = () => {
+      const known = (Friends.knownGroups && Friends.knownGroups()) || [];
+      const blocked = new Set(Store.get('parental.msgBlockedGroups') || []);
+      App.sheet('Group Messaging', known.length ? known.map((g) => `
+        <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">${g.name}</div><div class="lr-sub">Allow sending messages</div></div>
+          <label class="switch"><input type="checkbox" data-g="${g.id}" ${!blocked.has(g.id) ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></label></div>`).join('')
+        : '<p class="empty">No groups yet.</p>',
+      (root) => {
+        root.querySelectorAll('input[data-g]').forEach((inp) => inp.onchange = () => {
+          const set = new Set(Store.get('parental.msgBlockedGroups') || []);
+          inp.checked ? set.delete(inp.dataset.g) : set.add(inp.dataset.g);
+          Store.set('parental.msgBlockedGroups', [...set]);
+        });
+      });
+    };
 
     // security & anti-theft
     host.querySelector('#lock-pin').onclick = () => setPinSheet('security.lockPin', 'Lock Passcode', () => render(host));

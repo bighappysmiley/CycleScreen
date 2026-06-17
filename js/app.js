@@ -2,7 +2,7 @@
 const App = (() => {
   // App registry — drawer order & metadata.
   const APPS = [
-    { id: 'music',    name: '24six',   color: 'linear-gradient(135deg,#bf5af2,#ff375f)', glyph: '🎵', render: (h) => Music.render(h), guard: () => !Store.get('parental.blockMusic') },
+    { id: 'music',    name: 'Music',   color: 'linear-gradient(135deg,#bf5af2,#ff375f)', glyph: '🎵', render: (h) => Music.render(h), guard: () => !Store.get('parental.blockMusic') },
     { id: 'friends',  name: 'Friends', color: 'linear-gradient(135deg,#0a84ff,#64d2ff)', glyph: '👥', render: (h) => Friends.render(h), guard: () => true },
     { id: 'settings', name: 'Settings',color: 'linear-gradient(135deg,#8e8e93,#48484a)', glyph: '⚙️', render: (h) => Settings.render(h), guard: () => true },
     { id: 'maps',     name: 'Map',     color: 'linear-gradient(135deg,#30d158,#0a84ff)', glyph: '🗺️', action: () => { nav('dashboard'); MapView.recenter(); } },
@@ -230,6 +230,42 @@ const App = (() => {
     document.querySelectorAll('#tabbar .tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   }
 
+  /* ---- BikeTime (parental downtime) ---- */
+  let bikeBypassUntil = 0; // epoch ms until which a parent has unlocked downtime
+  const toMin = (t) => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
+  function inDowntime(bt, now) {
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const s = toMin(bt.start), e = toMin(bt.end);
+    if (s === e) return false;
+    return s < e ? (cur >= s && cur < e) : (cur >= s || cur < e); // handles overnight windows
+  }
+  function bikeTimeTick() {
+    const par = Store.get('parental');
+    const bt = par.bikeTime || {};
+    const active = par.enabled && bt.enabled && inDowntime(bt, new Date()) && Date.now() > bikeBypassUntil;
+    const existing = document.getElementById('biketime-overlay');
+    if (active && !existing) showBikeTime(bt);
+    else if (!active && existing) existing.remove();
+  }
+  function showBikeTime(bt) {
+    const ov = document.createElement('div');
+    ov.id = 'biketime-overlay';
+    ov.className = 'locked-overlay biketime';
+    ov.innerHTML = `
+      <div class="bt-emoji">🌙</div>
+      <div class="bt-title">Come back soon</div>
+      <div class="bt-sub">BikeTime is enabled, come back at <b>${formatTime(bt.end)}</b></div>
+      ${Store.get('parental.pin') ? `<button class="bt-bypass" id="bt-bypass">Parent: enter passcode</button>` : ''}`;
+    document.body.append(ov);
+    const by = ov.querySelector('#bt-bypass');
+    if (by) by.onclick = () => Security.verify(Store.get('parental.pin'), 'BikeTime', () => { bikeBypassUntil = Date.now() + 60 * 60 * 1000; ov.remove(); });
+  }
+  function formatTime(t) {
+    const [h, m] = (t || '7:00').split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
   function afterOnboard() { I18n.set(Store.get('language')); Dashboard.refresh(); renderDrawer(); }
 
   function boot() {
@@ -240,6 +276,7 @@ const App = (() => {
     init();
     Security.init();
     Cloud.init();
+    bikeTimeTick(); setInterval(bikeTimeTick, 20000); // parental downtime watcher
 
     if (Cloud.enabled) {
       // Real accounts: gate on Firebase auth state.

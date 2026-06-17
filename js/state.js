@@ -9,7 +9,12 @@ const Store = (() => {
     accent: '#0a84ff',
     quickDial: [null, null, null, null],
     groups: [], // each: { id, name, color, members:[{id,name,username,role}], messages:[], challenges:[] }
-    parental: { enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false, curfewEnd: '' },
+    parental: {
+      enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false,
+      bikeTime: { enabled: false, start: '21:00', end: '07:00' },
+      musicServices: { '24six': true, apple: true, spotify: true },
+      msgBlockedGroups: [], // group ids the user may NOT message in
+    },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
     music: { volume: 0.7, shuffle: false, repeat: false },
     bridge: { url: 'http://127.0.0.1:8765' }, // CycleScreen companion service on the Pi

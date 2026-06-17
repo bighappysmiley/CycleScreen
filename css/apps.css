@@ -76,6 +76,18 @@
 .playlist-row .lr-icon { background: var(--fill); color: var(--text-2); font-size: 15px; }
 .playlist-row.playing .lr-title { color: var(--accent-2); }
 
+/* ---------- Music service hub ---------- */
+.svc-bar { display: flex; gap: 6px; padding: 10px 14px; overflow-x: auto; border-bottom: 1px solid var(--hairline); }
+.svc { flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--fill-2); color: var(--text-2); border: 1px solid var(--hairline); transition: all .15s; }
+.svc.on { background: var(--svc, var(--accent)); color: #fff; border-color: transparent; }
+.svc.locked { opacity: .55; }
+.svc-body { }
+.coming-soon { text-align: center; padding: 40px 24px; }
+.coming-soon .cs-logo { width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center; font-size: 34px; margin: 0 auto 14px; box-shadow: var(--shadow-1); }
+.coming-soon h2 { margin: 0 0 8px; font-size: 22px; font-weight: 700; }
+.coming-soon .cs-badge { display: inline-block; background: var(--fill); color: var(--text-2); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
+.coming-soon p { color: var(--text-2); font-size: 13px; max-width: 300px; margin: 14px auto 0; }
+
 /* ---------- 24six embed ---------- */
 .t24-wrap { display: flex; flex-direction: column; height: 100%; }
 .t24-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--hairline); flex: 0 0 auto; }
@@ -150,6 +162,15 @@
 .lock-cancel { margin-top:14px; color:var(--accent); font-size:14px; font-weight:600; padding:8px 18px; }
 
 /* anti-theft alarm: flashing red, on top of everything */
+/* BikeTime downtime */
+.biketime { z-index:1900; gap:8px; }
+[data-theme="dark"] .biketime { background: radial-gradient(120% 90% at 50% 10%, #16243a 0%, #000 70%); }
+[data-theme="light"] .biketime { background: radial-gradient(120% 90% at 50% 10%, #dbeafe 0%, #f2f2f7 70%); }
+.biketime .bt-emoji { font-size:56px; }
+.biketime .bt-title { font-size:26px; font-weight:700; letter-spacing:-.5px; }
+.biketime .bt-sub { font-size:14px; color:var(--text-2); text-align:center; max-width:300px; }
+.biketime .bt-bypass { margin-top:18px; color:var(--accent); font-size:13px; font-weight:600; padding:8px 16px; }
+
 .alarm-overlay { z-index:2100; color:#fff; background:#2a0000; animation: alarmflash .7s steps(1) infinite; }
 .alarm-overlay .lock-emoji { animation: alarmshake .35s ease-in-out infinite; }
 .alarm-overlay .keypad button { background: rgba(255,255,255,.12); color:#fff; }

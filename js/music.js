@@ -15,11 +15,44 @@ const Music = (() => {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   };
 
-  let host = null;
+  let host = null, mount = null, service = '24six';
+
+  const SERVICES = [
+    { id: '24six', name: '24six', color: '#bf5af2' },
+    { id: 'apple', name: 'Apple Music', color: '#fa233b', soon: true },
+    { id: 'spotify', name: 'Spotify', color: '#1db954', soon: true },
+  ];
+  const allowed = (id) => !Store.get('parental.enabled') || (Store.get('parental.musicServices') || {})[id] !== false;
 
   function render(h) {
     host = h;
-    Bridge.isAvailable() ? renderPlayer() : renderSetup();
+    if (!allowed(service)) service = '24six';
+    renderHub();
+  }
+
+  function renderHub() {
+    host.innerHTML = `
+      <div class="svc-bar">${SERVICES.map((s) => `
+        <button class="svc ${service === s.id ? 'on' : ''} ${!allowed(s.id) ? 'locked' : ''}" data-s="${s.id}" style="--svc:${s.color}">
+          ${s.name}${!allowed(s.id) ? ' 🔒' : ''}</button>`).join('')}</div>
+      <div class="svc-body" id="svc-body"></div>`;
+    host.querySelectorAll('.svc').forEach((b) => b.onclick = () => {
+      if (!allowed(b.dataset.s)) return App.toast('🔒 Restricted by Parental Controls');
+      service = b.dataset.s; renderHub();
+    });
+    mount = host.querySelector('#svc-body');
+    if (service === '24six') (Bridge.isAvailable() ? renderPlayer() : renderSetup());
+    else renderComingSoon(SERVICES.find((s) => s.id === service));
+  }
+
+  function renderComingSoon(svc) {
+    mount.innerHTML = `
+      <div class="coming-soon">
+        <div class="cs-logo" style="background:${svc.color}">${svc.id === 'spotify' ? '🟢' : '🍎'}</div>
+        <h2>${svc.name}</h2>
+        <div class="cs-badge">Coming Soon</div>
+        <p>Streaming from ${svc.name} will arrive in a future CycleScreen update.</p>
+      </div>`;
   }
 
   /* ---- native player (bridge connected) ---- */
@@ -30,7 +63,7 @@ const Music = (() => {
     const playing = np && np.status === 'playing';
     const pct = has && np.length ? Math.min(100, (np.position / np.length) * 100) : 0;
 
-    host.innerHTML = `
+    mount.innerHTML = `
       <div class="music-hero">
         <div class="music-art ${playing ? 'spin' : ''}" id="mart">${art}</div>
         <div class="music-meta">
@@ -53,14 +86,14 @@ const Music = (() => {
       </div>`;
 
     paintPlay(playing);
-    host.querySelector('#mplay').onclick = () => Bridge.control('playpause');
-    host.querySelector('#mnext').onclick = () => Bridge.control('next');
-    host.querySelector('#mprev').onclick = () => Bridge.control('previous');
-    host.querySelector('#open24').onclick = () => { Bridge.launch(); App.toast('Opening 24six…'); };
+    mount.querySelector('#mplay').onclick = () => Bridge.control('playpause');
+    mount.querySelector('#mnext').onclick = () => Bridge.control('next');
+    mount.querySelector('#mprev').onclick = () => Bridge.control('previous');
+    mount.querySelector('#open24').onclick = () => { Bridge.launch(); App.toast('Opening 24six…'); };
   }
 
   function paintPlay(playing) {
-    const b = host && host.querySelector('#mplay'); if (!b) return;
+    const b = mount && mount.querySelector('#mplay'); if (!b) return;
     b.innerHTML = playing
       ? '<svg width="26" height="26" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
       : '<svg width="26" height="26" viewBox="0 0 24 24" style="margin-left:3px"><path d="M7 4l13 8-13 8V4z"/></svg>';
@@ -70,7 +103,7 @@ const Music = (() => {
   let usingEmbed = false;
   function renderSetup() {
     if (usingEmbed) return renderEmbed();
-    host.innerHTML = `
+    mount.innerHTML = `
       <div class="app-pad" style="max-width:520px;margin:0 auto">
         <div style="text-align:center;padding:8px 0 6px"><div style="font-size:48px">🎵</div>
           <h3 style="margin:6px 0 2px">Connect 24six</h3>
@@ -84,21 +117,19 @@ const Music = (() => {
         <button class="btn btn--block btn--pill" id="setup-web" style="margin-top:14px">Use 24six web player instead</button>
         <p style="text-align:center;color:var(--text-3);font-size:11px;margin-top:8px">Web player can't keep you logged in (24six blocks embedding).</p>
       </div>`;
-    host.querySelector('#setup-edit').onclick = () => App.open('settings');
-    host.querySelector('#setup-web').onclick = () => { usingEmbed = true; renderEmbed(); };
+    mount.querySelector('#setup-edit').onclick = () => App.open('settings');
+    mount.querySelector('#setup-web').onclick = () => { usingEmbed = true; renderEmbed(); };
   }
 
   function renderEmbed() {
-    host.innerHTML = `<div class="t24-wrap">
+    mount.innerHTML = `<div class="t24-wrap">
       <iframe class="t24-frame" src="/24six/" allow="autoplay; encrypted-media; microphone; clipboard-write; fullscreen"></iframe>
     </div>`;
   }
 
   /* live updates while the player screen is open */
   function refresh() {
-    if (host && document.body.contains(host)) {
-      if (Bridge.isAvailable() && !usingEmbed) renderPlayer();
-    }
+    if (host && mount && document.body.contains(host) && service === '24six' && Bridge.isAvailable() && !usingEmbed) renderPlayer();
   }
   Bridge.on('nowplaying', refresh);
   Bridge.on('status', () => { usingEmbed = false; refresh(); });

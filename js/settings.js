@@ -1,6 +1,15 @@
 /* settings.js — appearance, profile, quick-dial, parental controls, about. */
 const Settings = (() => {
   const accents = ['#0a84ff','#30d158','#ff375f','#bf5af2','#ff9f0a','#64d2ff'];
+  let parentalUnlocked = false;            // unlocked for the current Settings visit
+  function lockParental() { parentalUnlocked = false; }
+  // True when parental changes must be PIN-verified first.
+  const parentalLocked = () => { const par = Store.get('parental'); return par.enabled && par.pin && !parentalUnlocked; };
+  // Run `after` once the parent is verified (or immediately if not locked).
+  function requireParental(after) {
+    if (!parentalLocked()) return after && after();
+    Security.verify(Store.get('parental.pin'), 'Parental Controls', () => { parentalUnlocked = true; after && after(); });
+  }
 
   function render(host) {
     const p = Store.get('profile');
@@ -201,24 +210,36 @@ const Settings = (() => {
       });
     };
 
-    // parental — disabling controls requires the parental PIN (if set)
+    // parental — ANY change requires the parental PIN (unlock once per visit)
+    const gateToggle = (input, apply) => input.onchange = (e) => {
+      if (!parentalLocked()) return apply(e.target.checked);
+      const want = e.target.checked; e.target.checked = !want;       // revert until verified
+      requireParental(() => { e.target.checked = want; apply(want); });
+    };
+    const gateRow = (el, open) => el.onclick = () => requireParental(open);
+
     host.querySelector('#par-en').onchange = (e) => {
-      if (!e.target.checked && par.pin) {
-        e.target.checked = true; // revert until verified
-        Security.verify(par.pin, 'Parental Controls', () => { Store.set('parental.enabled', false); render(host); });
+      // turning OFF (while protected) needs the PIN; turning ON is always allowed
+      if (!e.target.checked && par.pin && !parentalUnlocked) {
+        e.target.checked = true;
+        Security.verify(par.pin, 'Parental Controls', () => { parentalUnlocked = true; Store.set('parental.enabled', false); render(host); });
         return;
       }
       Store.set('parental.enabled', e.target.checked);
     };
-    host.querySelector('#par-speed').onchange = (e) => Store.set('parental.maxSpeedAlert', +e.target.value || 30);
-    host.querySelector('#par-music').onchange = (e) => { Store.set('parental.blockMusic', e.target.checked); App.refreshDrawer(); };
-    host.querySelector('#par-friends').onchange = (e) => { Store.set('parental.blockFriends', e.target.checked); App.refreshDrawer(); };
-    host.querySelector('#par-pin').onclick = () => setPinSheet('parental.pin', 'Parental PIN', () => render(host));
+    gateToggle(host.querySelector('#par-music'), (v) => { Store.set('parental.blockMusic', v); App.refreshDrawer(); });
+    gateToggle(host.querySelector('#par-friends'), (v) => { Store.set('parental.blockFriends', v); App.refreshDrawer(); });
+    host.querySelector('#par-speed').onchange = (e) => {
+      const v = +e.target.value || 30;
+      if (!parentalLocked()) return Store.set('parental.maxSpeedAlert', v);
+      e.target.value = par.maxSpeedAlert; requireParental(() => { Store.set('parental.maxSpeedAlert', v); render(host); });
+    };
+    gateRow(host.querySelector('#par-pin'), () => setPinSheet('parental.pin', 'Parental PIN', () => render(host)));
 
     // BikeTime (downtime window)
     const bt = par.bikeTime || { enabled: false, start: '21:00', end: '07:00' };
     host.querySelector('#bt-sub-row').textContent = bt.enabled ? `${bt.start}–${bt.end}` : 'Off';
-    host.querySelector('#par-biketime').onclick = () => {
+    gateRow(host.querySelector('#par-biketime'), () => {
       App.sheet('BikeTime', `
         <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">Enable BikeTime</div><div class="lr-sub">Block use during the window below</div></div>
           <label class="switch"><input type="checkbox" id="bt-en" ${bt.enabled?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
@@ -233,12 +254,12 @@ const Settings = (() => {
           close(); render(host);
         };
       });
-    };
+    });
 
     // Music services allow-list
     const ms = par.musicServices || { '24six': true, apple: true, spotify: true };
     host.querySelector('#ms-sub').textContent = Object.keys(ms).filter((k) => ms[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
-    host.querySelector('#par-services').onclick = () => {
+    gateRow(host.querySelector('#par-services'), () => {
       const svcs = [['24six', '24six'], ['apple', 'Apple Music'], ['spotify', 'Spotify']];
       App.sheet('Music Services', svcs.map(([id, name]) => `
         <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">${name}</div></div>
@@ -250,10 +271,10 @@ const Settings = (() => {
           host.querySelector('#ms-sub').textContent = Object.keys(Store.get('parental.musicServices')).filter((k) => Store.get('parental.musicServices')[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
         });
       });
-    };
+    });
 
     // Group messaging allow-list
-    host.querySelector('#par-groups').onclick = () => {
+    gateRow(host.querySelector('#par-groups'), () => {
       const known = (Friends.knownGroups && Friends.knownGroups()) || [];
       const blocked = new Set(Store.get('parental.msgBlockedGroups') || []);
       App.sheet('Group Messaging', known.length ? known.map((g) => `
@@ -267,7 +288,7 @@ const Settings = (() => {
           Store.set('parental.msgBlockedGroups', [...set]);
         });
       });
-    };
+    });
 
     // security & anti-theft
     host.querySelector('#lock-pin').onclick = () => setPinSheet('security.lockPin', 'Lock Passcode', () => render(host));
@@ -352,5 +373,5 @@ const Settings = (() => {
     });
   }
 
-  return { render, editDial };
+  return { render, editDial, lockParental };
 })();

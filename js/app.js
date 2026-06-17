@@ -16,6 +16,7 @@ const App = (() => {
     document.querySelectorAll('#screens .screen').forEach((s) => s.classList.remove('screen--active'));
     const map = { dashboard: 'screen-dashboard', app: 'screen-app' };
     document.getElementById(map[id] || 'screen-dashboard').classList.add('screen--active');
+    if (current === 'app' && id !== 'app') Settings.lockParental(); // re-lock parental on leaving Settings
     current = id;
     document.getElementById('status-title').textContent = id === 'dashboard' ? 'CycleScreen' : document.getElementById('app-title').textContent;
     if (id === 'dashboard') MapView.invalidate();

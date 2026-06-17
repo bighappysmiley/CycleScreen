@@ -26,3 +26,13 @@ window.CYCLESCREEN_CLOUDINARY = {
   cloudName: "ddz3lxzaq",
   uploadPreset: "CycleScreen",
 };
+
+/* Music — default content shown in the Spotify / Apple Music embed players.
+ * spotify: path after open.spotify.com/embed/  (e.g. "playlist/<id>", "album/<id>")
+ * apple:   path after embed.music.apple.com/    (e.g. "us/playlist/<slug>/<pl.id>")
+ * Copy a share/embed link from the app and paste the path part here.
+ */
+window.CYCLESCREEN_MUSIC = {
+  spotify: "playlist/37i9dQZF1DXcBWIGoYBM5M",
+  apple: "",
+};

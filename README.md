@@ -17,8 +17,8 @@ themes, and PIN-protected parental controls.
 - **Current Ride tracker** — Start/End a ride with a live **timer**, **distance**, **average speed**, and **heart-rate (BPM)**.
 - **Bottom tab bar** — Home · Apps · Theme · Settings · Lock.
 - **Left rail** — your name + presence, large **speed** readout, **weather** (live, from your GPS location), and **quick-dial contacts** (tap to call over your phone's Bluetooth, **hold to edit**).
-- **App drawer** — springboard-style grid: 24six, Friends, Settings, Map, Weather, Fitness.
-- **24six music** — integrates the **native 24six app** on the Pi via a small companion bridge (real login + playback): launches 24six, shows live Now Playing, sends play/pause/next, and auto-returns to CycleScreen when a song starts. See [`pi/README.md`](pi/README.md). (A best-effort web embed is included as a fallback.)
+- **App drawer** — springboard-style grid: Music, Friends, Settings, Map, Weather, Fitness.
+- **Music** — plays **Spotify** and **Apple Music** through their official embed players (full tracks for signed-in subscribers, previews otherwise). The default playlist/album is configurable in `js/firebase-config.js → window.CYCLESCREEN_MUSIC`.
 - **Quick-dial calling** — each contact dials via the platform's `tel:` handler (connected phone / cellular / VoIP softphone).
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.
 - **Settings** — light/dark theme, accent color, profile, units (km/h ↔ mph), Bluetooth pairing, quick-dial editor.
@@ -66,13 +66,19 @@ off; it can't drive the call itself. Typical setup:
 3. Register that app as the `tel:` URL handler (e.g. via `xdg-mime default`),
    so tapping a contact in CycleScreen dials on the paired phone.
 
-### 24six music
+### Music (Spotify / Apple Music)
 
-24six has no public/embeddable API, so the Music app embeds `https://24six.app`
-in an iframe and falls back to an **Open 24six ↗** launch button. Whether the
-embed renders is up to 24six's own `X-Frame-Options` / CSP `frame-ancestors`
-headers — if they block framing (as most streaming apps do), the launch button
-opens the real app instead.
+The Music app uses the official **Spotify** (`open.spotify.com/embed`) and
+**Apple Music** (`embed.music.apple.com`) embed players, which are designed to
+be framed — full tracks play for signed-in subscribers, previews otherwise. Set
+the default content in `js/firebase-config.js`:
+
+```js
+window.CYCLESCREEN_MUSIC = {
+  spotify: "playlist/<id>",          // path after open.spotify.com/embed/
+  apple:   "us/playlist/<slug>/<pl.id>", // path after embed.music.apple.com/
+};
+```
 
 ### Google Maps
 
@@ -109,7 +115,7 @@ js/
   device.js       # hardware abstraction (GPS / Bluetooth / weather / battery) + simulation
   state.js        # persistent store (localStorage)
   map.js          # dashboard map (Leaflet/OSM, Google Maps optional)
-  music.js        # 24six-style player
+  music.js        # Spotify / Apple Music embeds
   friends.js      # friends, voice notes, emoji, GPS challenges
   settings.js     # appearance, profile, quick-dial, parental controls
   dashboard.js    # left rail (profile / speed / weather / quick-dial)

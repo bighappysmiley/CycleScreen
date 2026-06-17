@@ -89,17 +89,6 @@
           <div class="dial-list" id="dial-grid"><!-- populated --></div>
         </div>
 
-        <!-- Media controls (24six via the Pi bridge) -->
-        <div class="rail-media" id="rail-media" hidden>
-          <button class="rm-art" id="rm-art" aria-label="Now playing">♪</button>
-          <div class="rm-info"><div class="rm-title" id="rm-title">Not playing</div><div class="rm-artist" id="rm-artist"></div></div>
-          <div class="rm-controls">
-            <button id="rm-prev" aria-label="Previous"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 20L9 12l10-8v16zM5 19V5" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
-            <button id="rm-play" aria-label="Play/pause"></button>
-            <button id="rm-next" aria-label="Next"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4l10 8-10 8V4zM19 5v14" stroke="currentColor" stroke-width="2" fill="currentColor" stroke-linejoin="round"/></svg></button>
-          </div>
-        </div>
-
         <!-- Current ride tracker -->
         <div class="ride-card" id="ride-card">
           <div class="ride-head" id="lbl-ride">Current Ride</div>
@@ -121,13 +110,6 @@
           <button class="tab" data-tab="lock"><span class="ti" data-icon="lock"></span><span id="tab-lock">Lock</span></button>
         </nav>
       </aside>
-
-      <!-- Mini now-playing pill -->
-      <button class="now-pill glass" id="now-pill" hidden>
-        <span class="now-pill-art" id="now-pill-art">♪</span>
-        <span class="now-pill-text"><span id="now-pill-title">Nothing playing</span></span>
-        <span class="now-pill-eq"><i></i><i></i><i></i></span>
-      </button>
     </section>
 
     <!-- App screens get injected here -->
@@ -165,7 +147,6 @@
   <script src="js/icons.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/onboarding.js"></script>
-  <script src="js/bridge.js"></script>
   <script src="js/map.js"></script>
   <script src="js/music.js"></script>
   <script src="js/friends.js"></script>

@@ -3,14 +3,7 @@
   publish = "."
   command = ""
 
-# Full same-origin reverse proxy for 24six (login/session + framing). Runs on
-# every path; CycleScreen's own files are returned early inside the function.
-[[edge_functions]]
-  path = "/*"
-  function = "proxy-24six"
-
 # SPA-style fallback so any path loads the app shell.
-# (Edge functions above intercept /24six/* before this catch-all.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -19,5 +12,5 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Geolocation + Bluetooth are needed for the real GPS dongle / phone
-    Permissions-Policy = "geolocation=(self), bluetooth=(self), microphone=(self)"
+    # GPS, phone, mic for voice notes; autoplay for the Spotify/Apple embeds
+    Permissions-Policy = "geolocation=(self), bluetooth=(self), microphone=(self), autoplay=*"

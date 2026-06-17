@@ -70,9 +70,6 @@ const Settings = (() => {
           <div class="lr-trail" id="bt-act">Connect</div></div>
         <div class="list-row" id="dial-edit"><div class="lr-icon" style="background:#30d158">${Icons.phone}</div>
           <div class="lr-main"><div class="lr-title">Quick Dial Contacts</div></div><div class="lr-trail">Edit ›</div></div>
-        <div class="list-row" id="bridge-row"><div class="lr-icon" style="background:#bf5af2">${Icons.headphones}</div>
-          <div class="lr-main"><div class="lr-title">24six Bridge</div><div class="lr-sub" id="bridge-sub">—</div></div>
-          <div class="lr-trail">Edit ›</div></div>
       </div>
 
       <div class="list-section-title">Parental Controls</div>
@@ -185,19 +182,6 @@ const Settings = (() => {
 
     host.querySelector('#dial-edit').onclick = () => dialSheet(() => render(host));
 
-    const bridgeSub = host.querySelector('#bridge-sub');
-    bridgeSub.textContent = (Bridge.isAvailable() ? '✅ Connected · ' : '⚠️ Offline · ') + Bridge.base();
-    host.querySelector('#bridge-row').onclick = () => {
-      App.sheet('24six Bridge', `
-        <input class="field" id="br-url" value="${Store.get('bridge.url')}" placeholder="http://127.0.0.1:8765">
-        <p style="font-size:12px;color:var(--text-2);margin:2px 4px 12px">Address of the CycleScreen companion service on the Pi (see pi/cyclescreen-bridge.py).</p>
-        <button class="btn btn--block" id="br-save">Save</button>`, (root, close) => {
-        root.querySelector('#br-save').onclick = () => {
-          Store.set('bridge.url', root.querySelector('#br-url').value.trim() || 'http://127.0.0.1:8765');
-          close(); render(host);
-        };
-      });
-    };
 
     host.querySelector('#lang-row').onclick = () => {
       App.sheet('Language', `<div class="onb-langs" style="max-height:50vh">
@@ -257,10 +241,11 @@ const Settings = (() => {
     });
 
     // Music services allow-list
-    const ms = par.musicServices || { '24six': true, apple: true, spotify: true };
-    host.querySelector('#ms-sub').textContent = Object.keys(ms).filter((k) => ms[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
+    const svcName = (k) => k === 'apple' ? 'Apple' : 'Spotify';
+    const ms = par.musicServices || { spotify: true, apple: true };
+    host.querySelector('#ms-sub').textContent = Object.keys(ms).filter((k) => ms[k] !== false).map(svcName).join(', ') || 'None';
     gateRow(host.querySelector('#par-services'), () => {
-      const svcs = [['24six', '24six'], ['apple', 'Apple Music'], ['spotify', 'Spotify']];
+      const svcs = [['spotify', 'Spotify'], ['apple', 'Apple Music']];
       App.sheet('Music Services', svcs.map(([id, name]) => `
         <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">${name}</div></div>
           <label class="switch"><input type="checkbox" data-svc="${id}" ${ms[id] !== false ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></label></div>`).join(''),
@@ -268,7 +253,7 @@ const Settings = (() => {
         root.querySelectorAll('input[data-svc]').forEach((inp) => inp.onchange = () => {
           const cur = Store.get('parental.musicServices') || {};
           Store.set('parental.musicServices', { ...cur, [inp.dataset.svc]: inp.checked });
-          host.querySelector('#ms-sub').textContent = Object.keys(Store.get('parental.musicServices')).filter((k) => Store.get('parental.musicServices')[k] !== false).map((k) => k === '24six' ? '24six' : k === 'apple' ? 'Apple' : 'Spotify').join(', ') || 'None';
+          host.querySelector('#ms-sub').textContent = Object.keys(Store.get('parental.musicServices')).filter((k) => Store.get('parental.musicServices')[k] !== false).map(svcName).join(', ') || 'None';
         });
       });
     });

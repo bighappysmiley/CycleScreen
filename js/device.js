@@ -26,30 +26,57 @@ const Device = (() => {
   };
 
   /* ---------------- GPS ---------------- */
-  let simTimer = null;
+  let simTimer = null, fallbackTimer = null, lastReal = 0;
   function startGPS() {
     if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          state.simulated = false;
-          state.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          if (pos.coords.heading != null) state.heading = pos.coords.heading;
-          state.speedKmh = pos.coords.speed != null ? Math.max(0, pos.coords.speed * 3.6) : state.speedKmh;
-          state.satellites = 9; state.hasFix = true;
-          emit('gps', { ...state });
-        },
-        () => simulateGPS(),
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 8000 }
-      );
-      // Kick off sim immediately too; real fixes will override it.
-      simulateGPS();
+      navigator.geolocation.watchPosition(onRealFix, onGeoError, {
+        enableHighAccuracy: true, maximumAge: 1000, timeout: 12000,
+      });
+      // Only fall back to simulation if no real fix shows up shortly.
+      fallbackTimer = setTimeout(() => { if (!state.hasFix) simulateGPS(); }, 4000);
     } else {
       simulateGPS();
     }
   }
 
+  function onRealFix(pos) {
+    stopSim();
+    clearTimeout(fallbackTimer);
+    const firstFix = lastReal === 0;
+    lastReal = Date.now();
+    const c = pos.coords;
+    // derive speed/heading if the device doesn't report them
+    if (c.speed != null && !Number.isNaN(c.speed)) state.speedKmh = Math.max(0, c.speed * 3.6);
+    else if (state.lastCoords) {
+      const d = haversineKm(state.lastCoords, { lat: c.latitude, lng: c.longitude });
+      const dt = (pos.timestamp - (state.lastTs || pos.timestamp)) / 1000;
+      if (dt > 0) state.speedKmh = Math.min(120, (d / dt) * 3600);
+    }
+    if (c.heading != null && !Number.isNaN(c.heading)) state.heading = c.heading;
+    state.lastCoords = { lat: c.latitude, lng: c.longitude };
+    state.lastTs = pos.timestamp;
+    state.coords = { lat: c.latitude, lng: c.longitude };
+    state.satellites = c.accuracy && c.accuracy < 25 ? 11 : 7;
+    state.hasFix = true; state.simulated = false;
+    emit('gps', { ...state });
+    if (firstFix) fetchWeather(); // re-fetch weather at the real location
+  }
+
+  function onGeoError() {
+    // permission denied / unavailable / timeout → simulate so the UI still works
+    if (!state.hasFix || (Date.now() - lastReal > 15000)) simulateGPS();
+  }
+
+  function haversineKm(a, b) {
+    const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  }
+
+  function stopSim() { if (simTimer) { clearInterval(simTimer); simTimer = null; } }
+
   function simulateGPS() {
-    if (simTimer) return;
+    if (simTimer || state.hasFix && !state.simulated) return;
     state.simulated = true;
     let t = 0, targetSpeed = 22;
     simTimer = setInterval(() => {

@@ -31,10 +31,16 @@ const MapView = (() => {
     onGPS(Device.state);
   }
 
+  let snappedReal = false;
   function onGPS(s) {
     if (!ready) return;
     const ll = [s.coords.lat, s.coords.lng];
     marker.setLatLng(ll);
+    // first real (non-simulated) fix can be far from the default — snap, don't slow-pan
+    if (!snappedReal && !s.simulated) {
+      snappedReal = true; trailCoords = [];
+      map.setView(ll, 16); marker.setLatLng(ll); trail.setLatLngs([]); return;
+    }
     trailCoords.push(ll);
     if (trailCoords.length > 400) trailCoords.shift();
     trail.setLatLngs(trailCoords);

@@ -119,16 +119,10 @@
       </button>
     </section>
 
-    <!-- App Drawer -->
-    <section class="screen drawer" id="screen-drawer">
-      <div class="drawer-grid" id="drawer-grid"><!-- populated --></div>
-      <button class="drawer-close" data-nav="dashboard" aria-label="Close">Done</button>
-    </section>
-
     <!-- App screens get injected here -->
     <section class="screen app-host" id="screen-app">
       <div class="app-bar glass">
-        <button class="app-back" data-nav="drawer">
+        <button class="app-back" id="app-back">
           <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Apps</span>
         </button>
@@ -138,6 +132,14 @@
       <div class="app-body" id="app-body"><!-- injected --></div>
     </section>
   </main>
+
+  <!-- App drawer: slides up from the bottom over the dashboard -->
+  <div class="appdrawer-backdrop" id="drawer-backdrop"></div>
+  <section class="appdrawer glass" id="screen-drawer" aria-hidden="true">
+    <div class="appdrawer-handle"></div>
+    <div class="drawer-grid" id="drawer-grid"><!-- populated --></div>
+    <button class="drawer-close" id="drawer-done" aria-label="Close">Done</button>
+  </section>
 
   <div id="toast" class="toast" hidden></div>
 

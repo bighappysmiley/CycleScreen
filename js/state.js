@@ -7,12 +7,7 @@ const Store = (() => {
     language: 'en',
     theme: 'dark',
     accent: '#0a84ff',
-    quickDial: [
-      { name: 'Maya',  phone: '+972500000001', initials: 'M', color: '#ff375f' },
-      { name: 'Dad',   phone: '+972500000002', initials: 'D', color: '#0a84ff' },
-      { name: 'Eitan', phone: '+972500000003', initials: 'E', color: '#30d158' },
-      null,
-    ],
+    quickDial: [null, null, null, null],
     friends: [
       { id: 'f1', name: 'Maya Levi',  username: 'mayal', initials: 'ML', presence: 'riding',  color: '#ff375f' },
       { id: 'f2', name: 'Eitan Cohen',username: 'eitanc',initials: 'EC', presence: 'online',  color: '#30d158' },

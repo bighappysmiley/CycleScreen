@@ -13,18 +13,37 @@ const App = (() => {
   let current = 'dashboard';
 
   function nav(id) {
-    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('screen--active'));
-    const map = { dashboard: 'screen-dashboard', drawer: 'screen-drawer', app: 'screen-app' };
+    document.querySelectorAll('#screens .screen').forEach((s) => s.classList.remove('screen--active'));
+    const map = { dashboard: 'screen-dashboard', app: 'screen-app' };
     document.getElementById(map[id] || 'screen-dashboard').classList.add('screen--active');
     current = id;
-    document.getElementById('status-title').textContent = id === 'dashboard' ? 'CycleScreen' : (id === 'drawer' ? 'Apps' : document.getElementById('app-title').textContent);
+    document.getElementById('status-title').textContent = id === 'dashboard' ? 'CycleScreen' : document.getElementById('app-title').textContent;
     if (id === 'dashboard') MapView.invalidate();
+  }
+
+  /* ---- App drawer: slide-up sheet over the dashboard ---- */
+  let drawerOpen = false;
+  function openDrawer() {
+    nav('dashboard'); // drawer always sits over the dashboard
+    document.getElementById('drawer-backdrop').classList.add('open');
+    document.getElementById('screen-drawer').classList.add('open');
+    document.getElementById('screen-drawer').setAttribute('aria-hidden', 'false');
+    document.getElementById('status-title').textContent = 'Apps';
+    setTab('apps'); drawerOpen = true;
+  }
+  function closeDrawer() {
+    document.getElementById('drawer-backdrop').classList.remove('open');
+    document.getElementById('screen-drawer').classList.remove('open');
+    document.getElementById('screen-drawer').setAttribute('aria-hidden', 'true');
+    if (current === 'dashboard') document.getElementById('status-title').textContent = 'CycleScreen';
+    setTab('home'); drawerOpen = false;
   }
 
   function open(appId) {
     const app = APPS.find((a) => a.id === appId);
     if (!app) return;
     if (app.guard && !app.guard()) return App.toast('🔒 Restricted by Parental Controls');
+    closeDrawer();
     if (app.action) return app.action();
     document.getElementById('app-title').textContent = app.name;
     const host = document.getElementById('app-body'); host.innerHTML = '';
@@ -172,15 +191,20 @@ const App = (() => {
     // nav wiring
     document.querySelectorAll('[data-nav]').forEach((b) => b.onclick = () => nav(b.dataset.nav));
 
+    // app drawer open/close
+    document.getElementById('drawer-backdrop').onclick = closeDrawer;
+    document.getElementById('drawer-done').onclick = closeDrawer;
+    // "Back" from a full-screen app returns to the dashboard with the drawer up
+    document.getElementById('app-back').onclick = () => { nav('dashboard'); openDrawer(); };
+
     // bottom tab bar
     document.querySelectorAll('#tabbar .tab').forEach((b) => b.onclick = () => {
       const t = b.dataset.tab;
-      if (t === 'home') nav('dashboard');
-      else if (t === 'apps') nav('drawer');
+      if (t === 'home') { closeDrawer(); nav('dashboard'); setTab('home'); }
+      else if (t === 'apps') { drawerOpen ? closeDrawer() : openDrawer(); }
       else if (t === 'theme') setTheme(Store.get('theme') === 'dark' ? 'light' : 'dark');
       else if (t === 'settings') open('settings');
       else if (t === 'lock') lockNow();
-      setTab(t === 'theme' || t === 'lock' ? 'home' : t);
     });
   }
 

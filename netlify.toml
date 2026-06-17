@@ -20,4 +20,4 @@
   for = "/*"
   [headers.values]
     # Geolocation + Bluetooth are needed for the real GPS dongle / phone
-    Permissions-Policy = "geolocation=(self), bluetooth=(self)"
+    Permissions-Policy = "geolocation=(self), bluetooth=(self), microphone=(self)"

@@ -8,16 +8,7 @@ const Store = (() => {
     theme: 'dark',
     accent: '#0a84ff',
     quickDial: [null, null, null, null],
-    friends: [
-      { id: 'f1', name: 'Maya Levi',  username: 'mayal', initials: 'ML', presence: 'riding',  color: '#ff375f' },
-      { id: 'f2', name: 'Eitan Cohen',username: 'eitanc',initials: 'EC', presence: 'online',  color: '#30d158' },
-      { id: 'f3', name: 'Dana R.',    username: 'danar', initials: 'DR', presence: 'offline', color: '#bf5af2' },
-    ],
-    challenges: [
-      { id: 'c1', type: 'race',     title: 'Sunset Sprint',  meta: '5 km • 3 riders', joined: true,  distance: 5 },
-      { id: 'c2', type: 'climb',    title: 'Carmel Climb',   meta: '420 m ascent • 6 riders', joined: false, distance: 12 },
-      { id: 'c3', type: 'distance', title: 'Weekly 100',     meta: '100 km this week', joined: true,  distance: 100 },
-    ],
+    groups: [], // each: { id, name, color, members:[{id,name,username,role}], messages:[], challenges:[] }
     parental: { enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false, curfewEnd: '' },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
     music: { volume: 0.7, shuffle: false, repeat: false },

@@ -94,6 +94,20 @@
 .coming-soon .cs-badge { display: inline-block; background: var(--fill); color: var(--text-2); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
 .coming-soon p { color: var(--text-2); font-size: 13px; max-width: 300px; margin: 14px auto 0; }
 
+/* ---------- Finish (ride app) ---------- */
+.finish-timer { text-align: center; font-size: 48px; font-weight: 700; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; padding: 18px 0 6px; }
+.finish-timer.live { color: var(--accent); }
+.finish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.finish-stat { background: var(--fill-2); border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; align-items: center; }
+.finish-stat b { font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+.finish-stat small { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+.watch-hero { text-align: center; padding: 24px 0 18px; }
+.watch-bpm { font-size: 56px; font-weight: 700; letter-spacing: -2px; color: var(--text-3); display: inline-flex; align-items: baseline; gap: 6px; }
+.watch-bpm.live { color: var(--pink); animation: hrbeat 1s ease-in-out infinite; }
+.watch-bpm small { font-size: 14px; font-weight: 600; color: var(--text-2); }
+@keyframes hrbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.06); } 28% { transform: scale(1); } }
+.watch-status { font-size: 13px; color: var(--text-2); margin-top: 8px; }
+
 /* ---------- Music service embed (Spotify / Apple) ---------- */
 .embed-wrap { height: 100%; display: flex; flex-direction: column; padding: 12px; }
 .embed-frame { flex: 1; width: 100%; border: 0; border-radius: var(--radius-lg); background: var(--bg-elev); min-height: 360px; }

@@ -7,7 +7,7 @@ const App = (() => {
     { id: 'settings', name: 'Settings',color: '#8e8e93', icon: 'settings', render: (h) => Settings.render(h), guard: () => true },
     { id: 'maps',     name: 'Map',     color: '#34c759', icon: 'map',      action: () => { nav('dashboard'); MapView.recenter(); } },
     { id: 'weather',  name: 'Weather', color: '#0a84ff', icon: 'weather',  action: () => weatherSheet() },
-    { id: 'fitness',  name: 'Fitness', color: '#ff9500', icon: 'fitness',  action: () => fitnessSheet() },
+    { id: 'finish',   name: 'Finish',  color: '#ff9500', icon: 'fitness',  render: (h) => Finish.render(h) },
   ];
 
   let current = 'dashboard';
@@ -163,16 +163,6 @@ const App = (() => {
       <div style="color:var(--text-3);font-size:12px;margin-top:10px">At your current GPS location</div>
     </div>`);
   }
-  function fitnessSheet() {
-    const s = Device.state;
-    sheet('Ride Stats', `<div class="list">
-      <div class="list-row"><div class="lr-main"><div class="lr-title">Current Speed</div></div><div class="lr-trail">${s.speedKmh.toFixed(1)} km/h</div></div>
-      <div class="list-row"><div class="lr-main"><div class="lr-title">Heading</div></div><div class="lr-trail">${Math.round(s.heading)}°</div></div>
-      <div class="list-row"><div class="lr-main"><div class="lr-title">GPS Satellites</div></div><div class="lr-trail">${s.satellites}</div></div>
-      <div class="list-row"><div class="lr-main"><div class="lr-title">Position</div></div><div class="lr-trail">${s.coords.lat.toFixed(4)}, ${s.coords.lng.toFixed(4)}</div></div>
-    </div>`);
-  }
-
   /* ---- parental lock gate on boot ---- */
   function init() {
     // restore prefs

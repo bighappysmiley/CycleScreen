@@ -131,6 +131,34 @@ const Device = (() => {
     triedLowAccuracy = false; clearTimeout(fallbackTimer); requestLocation();
   }
 
+  /* ---------------- Heart-rate monitor (BLE) ---------------- */
+  // Connects to a standard Bluetooth Heart Rate sensor (GATT 0x180D / 0x2A37):
+  // chest straps, many watches, etc. Pulls live BPM and emits 'hr'.
+  let hrChar = null;
+  async function connectHeartRate() {
+    if (!navigator.bluetooth) { App.toast && App.toast('Web Bluetooth not supported in this browser'); return false; }
+    try {
+      const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: ['heart_rate'] }], optionalServices: ['battery_service'] });
+      const server = await dev.gatt.connect();
+      const svc = await server.getPrimaryService('heart_rate');
+      hrChar = await svc.getCharacteristic('heart_rate_measurement');
+      await hrChar.startNotifications();
+      hrChar.addEventListener('characteristicvaluechanged', (e) => {
+        const v = e.target.value, flags = v.getUint8(0);
+        state.bpm = (flags & 0x1) ? v.getUint16(1, true) : v.getUint8(1);
+        emit('hr', state.bpm);
+      });
+      state.hrConnected = true; state.hrDevice = dev.name || 'Heart Rate';
+      dev.addEventListener('gattserverdisconnected', () => { state.hrConnected = false; state.bpm = 0; emit('hr', null); emit('hrstatus', { ...state }); });
+      emit('hrstatus', { ...state });
+      return true;
+    } catch (e) { return false; } // user cancelled or no device
+  }
+  function disconnectHeartRate() {
+    try { if (hrChar && hrChar.service && hrChar.service.device.gatt.connected) hrChar.service.device.gatt.disconnect(); } catch (e) {}
+    state.hrConnected = false; state.bpm = 0; emit('hr', null); emit('hrstatus', { ...state });
+  }
+
   function haversineKm(a, b) {
     const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
     const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
@@ -237,5 +265,5 @@ const Device = (() => {
     setInterval(fetchWeather, 10 * 60 * 1000);
   }
 
-  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather, retryLocation, setManualLocation, clearManualLocation };
+  return { state, on, init, connectBluetooth, disconnectBluetooth, dial, fetchWeather, retryLocation, setManualLocation, clearManualLocation, connectHeartRate, disconnectHeartRate };
 })();

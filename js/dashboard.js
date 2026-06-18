@@ -122,15 +122,19 @@ const Dashboard = (() => {
     document.getElementById('ride-btn').textContent = I18n.t('start_ride');
     const imperial = Store.get('profile.units') === 'imperial';
     const dist = imperial ? ride.distanceKm * 0.621371 : ride.distanceKm;
-    Store.set('lastRide', { date: new Date().toISOString(), distanceKm: ride.distanceKm, durationSec: ride.elapsed, avgKmh: avgKmh() });
+    const rec = { id: 'r' + Date.now(), date: new Date().toISOString(), distanceKm: ride.distanceKm, durationSec: ride.elapsed, avgKmh: avgKmh(), bpm: Math.round(ride.bpm) || null };
+    Store.update((d) => { d.lastRide = rec; (d.rides = d.rides || []).unshift(rec); if (d.rides.length > 100) d.rides.length = 100; });
     App.toast(`🏁 ${dist.toFixed(1)} ${imperial ? 'mi' : 'km'} · ${fmtDur(ride.elapsed)}`);
   }
   function tickRide() {
     ride.elapsed = Math.floor((Date.now() - ride.startTs) / 1000);
     document.getElementById('ride-timer').textContent = fmtDur(ride.elapsed);
-    // simulated heart rate that tracks effort/speed
-    const target = 90 + Math.min(90, Device.state.speedKmh * 2.4);
-    ride.bpm += (target - ride.bpm) * 0.15 + (Math.random() - 0.5) * 3;
+    if (Device.state.hrConnected && Device.state.bpm) {
+      ride.bpm = Device.state.bpm; // real heart rate from the connected watch/strap
+    } else {
+      const target = 90 + Math.min(90, Device.state.speedKmh * 2.4); // simulated when none connected
+      ride.bpm += (target - ride.bpm) * 0.15 + (Math.random() - 0.5) * 3;
+    }
     document.getElementById('ride-bpm').textContent = Math.round(ride.bpm) || '--';
   }
   function onRideFix(s) {
@@ -173,10 +177,23 @@ const Dashboard = (() => {
     wireSearch();
     Device.on('gps', (s) => { paintSpeed(s.speedKmh); onRideFix(s); });
     Device.on('weather', paintWeather);
+    Device.on('hr', (bpm) => { if (bpm && !ride.active) { const el = document.getElementById('ride-bpm'); if (el) el.textContent = bpm; } });
     document.getElementById('ride-btn').onclick = toggleRide;
     document.getElementById('rail-gear').onclick = () => App.open('settings');
-    document.getElementById('ov-speed').onclick = () => App.open('fitness');
+    document.getElementById('ov-speed').onclick = () => App.open('finish');
   }
 
-  return { init, refresh, renderDials };
+  // live ride snapshot for the Finish app
+  function getRide() {
+    const imperial = Store.get('profile.units') === 'imperial';
+    return {
+      active: ride.active, elapsed: ride.elapsed, durationStr: fmtDur(ride.elapsed),
+      distance: (imperial ? ride.distanceKm * 0.621371 : ride.distanceKm),
+      avg: (imperial ? avgKmh() * 0.621371 : avgKmh()),
+      bpm: Math.round(ride.bpm) || (Device.state.bpm || 0),
+      unit: imperial ? 'mi' : 'km', speedUnit: imperial ? 'mph' : 'km/h',
+    };
+  }
+
+  return { init, refresh, renderDials, getRide, toggleRide };
 })();

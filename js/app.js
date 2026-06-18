@@ -7,7 +7,7 @@ const App = (() => {
     { id: 'settings', name: 'Settings',color: '#8e8e93', icon: 'settings', render: (h) => Settings.render(h), guard: () => true },
     { id: 'maps',     name: 'Map',     color: '#34c759', icon: 'map',      action: () => { nav('dashboard'); MapView.recenter(); } },
     { id: 'weather',  name: 'Weather', color: '#0a84ff', icon: 'weather',  action: () => weatherSheet() },
-    { id: 'finish',   name: 'Finish',  color: '#ff9500', icon: 'fitness',  render: (h) => Finish.render(h) },
+    { id: 'fitness',  name: 'Fitness', color: '#ff9500', icon: 'fitness',  render: (h) => Fitness.render(h) },
   ];
 
   let current = 'dashboard';

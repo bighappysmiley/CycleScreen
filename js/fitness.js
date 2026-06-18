@@ -1,10 +1,10 @@
-/* finish.js — "Finish" ride app: Ride / Watch / History tabs.
+/* fitness.js — "Fitness" ride app: Ride / Watch / History tabs.
  *
  * Ride:    live stats for the current ride (shared with the rail card) + Start/End.
  * Watch:   connect a Bluetooth heart-rate monitor (Pixel Watch / strap) for live BPM.
  * History: every finished ride, saved automatically when a ride ends.
  */
-const Finish = (() => {
+const Fitness = (() => {
   let host = null, tab = 'ride', timer = null;
 
   function render(h) { host = h; renderTabs(); }
@@ -77,7 +77,7 @@ const Finish = (() => {
     const imperial = Store.get('profile.units') === 'imperial';
     const u = imperial ? 'mi' : 'km';
     const conv = (km) => (imperial ? km * 0.621371 : km);
-    if (!rides.length) { body.innerHTML = `<div class="empty">No rides yet.<br>Finish a ride and it'll show up here.</div>`; return; }
+    if (!rides.length) { body.innerHTML = `<div class="empty">No rides yet.<br>Complete a ride and it'll show up here.</div>`; return; }
     const totalKm = rides.reduce((a, r) => a + (r.distanceKm || 0), 0);
     const totalSec = rides.reduce((a, r) => a + (r.durationSec || 0), 0);
     body.innerHTML = `

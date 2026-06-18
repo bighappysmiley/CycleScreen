@@ -82,7 +82,7 @@ const Settings = (() => {
           <div class="lr-main"><div class="lr-title">Speed Alert</div><div class="lr-sub">Warn above limit</div></div>
           <div class="lr-trail"><input class="field" id="par-speed" type="number" style="width:64px;margin:0;padding:7px;text-align:center" value="${par.maxSpeedAlert}"> km/h</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#5e5ce6">${Icons.moon}</div>
-          <div class="lr-main"><div class="lr-title">BikeTime (Downtime)</div><div class="lr-sub" id="bt-sub-row">Off</div></div>
+          <div class="lr-main"><div class="lr-title">BikeTime</div><div class="lr-sub" id="bt-sub-row">Off</div></div>
           <div class="lr-trail" id="par-biketime">Edit ›</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#bf5af2">${Icons.music}</div>
           <div class="lr-main"><div class="lr-title">Restrict Music</div><div class="lr-sub">Block the Music app entirely</div></div>

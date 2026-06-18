@@ -122,20 +122,16 @@ const Dashboard = (() => {
     document.getElementById('ride-btn').textContent = I18n.t('start_ride');
     const imperial = Store.get('profile.units') === 'imperial';
     const dist = imperial ? ride.distanceKm * 0.621371 : ride.distanceKm;
-    const rec = { id: 'r' + Date.now(), date: new Date().toISOString(), distanceKm: ride.distanceKm, durationSec: ride.elapsed, avgKmh: avgKmh(), bpm: Math.round(ride.bpm) || null };
+    const rec = { id: 'r' + Date.now(), date: new Date().toISOString(), distanceKm: ride.distanceKm, durationSec: ride.elapsed, avgKmh: avgKmh(), bpm: (Device.state.hrConnected && Device.state.bpm) ? Device.state.bpm : null };
     Store.update((d) => { d.lastRide = rec; (d.rides = d.rides || []).unshift(rec); if (d.rides.length > 100) d.rides.length = 100; });
     App.toast(`🏁 ${dist.toFixed(1)} ${imperial ? 'mi' : 'km'} · ${fmtDur(ride.elapsed)}`);
   }
   function tickRide() {
     ride.elapsed = Math.floor((Date.now() - ride.startTs) / 1000);
     document.getElementById('ride-timer').textContent = fmtDur(ride.elapsed);
-    if (Device.state.hrConnected && Device.state.bpm) {
-      ride.bpm = Device.state.bpm; // real heart rate from the connected watch/strap
-    } else {
-      const target = 90 + Math.min(90, Device.state.speedKmh * 2.4); // simulated when none connected
-      ride.bpm += (target - ride.bpm) * 0.15 + (Math.random() - 0.5) * 3;
-    }
-    document.getElementById('ride-bpm').textContent = Math.round(ride.bpm) || '--';
+    // BPM comes only from a connected Bluetooth watch/strap — no fake numbers.
+    ride.bpm = (Device.state.hrConnected && Device.state.bpm) ? Device.state.bpm : 0;
+    document.getElementById('ride-bpm').textContent = ride.bpm || '--';
   }
   function onRideFix(s) {
     if (!ride.active) return;
@@ -180,17 +176,17 @@ const Dashboard = (() => {
     Device.on('hr', (bpm) => { if (bpm && !ride.active) { const el = document.getElementById('ride-bpm'); if (el) el.textContent = bpm; } });
     document.getElementById('ride-btn').onclick = toggleRide;
     document.getElementById('rail-gear').onclick = () => App.open('settings');
-    document.getElementById('ov-speed').onclick = () => App.open('finish');
+    document.getElementById('ov-speed').onclick = () => App.open('fitness');
   }
 
-  // live ride snapshot for the Finish app
+  // live ride snapshot for the Fitness app
   function getRide() {
     const imperial = Store.get('profile.units') === 'imperial';
     return {
       active: ride.active, elapsed: ride.elapsed, durationStr: fmtDur(ride.elapsed),
       distance: (imperial ? ride.distanceKm * 0.621371 : ride.distanceKm),
       avg: (imperial ? avgKmh() * 0.621371 : avgKmh()),
-      bpm: Math.round(ride.bpm) || (Device.state.bpm || 0),
+      bpm: (Device.state.hrConnected && Device.state.bpm) ? Device.state.bpm : 0,
       unit: imperial ? 'mi' : 'km', speedUnit: imperial ? 'mph' : 'km/h',
     };
   }

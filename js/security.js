@@ -51,10 +51,12 @@ const Security = (() => {
     showLockScreen();
   }
   function showLockScreen() {
+    // Locking the bike arms the anti-theft watch (re-anchor to where it's parked).
+    if (Store.get('security.alarmArmed')) { needsReanchor = true; triggered = false; }
     pinScreen({
       emoji: '🔒', title: 'CycleScreen Locked', sub: 'Enter your lock passcode',
       pin: Store.get('security.lockPin'),
-      onSuccess: () => { Store.set('security.locked', false); },
+      onSuccess: () => { Store.set('security.locked', false); triggered = false; stopSiren(); },
     });
   }
   // called on boot — only shows if it was locked when last used (not auto-lock)
@@ -62,12 +64,11 @@ const Security = (() => {
     if (Store.get('security.locked') && Store.get('security.lockPin')) showLockScreen();
   }
 
-  /* ---------- anti-theft alarm ---------- */
-  let anchor = null, triggered = false, audioCtx = null, sirenTimer = null, alarmOv = null, needsReanchor = false;
+  /* ---------- anti-theft alarm (active only while the device is LOCKED) ---------- */
+  let anchor = null, triggered = false, audioCtx = null, sirenTimer = null, sirenNodes = null, alarmOv = null, needsReanchor = false;
 
   function arm() {
     if (!Store.get('security.lockPin')) { App.toast('Set a Lock Passcode in Settings → Security first'); return false; }
-    anchor = { ...Device.state.coords };
     triggered = false;
     // prime audio now (within the user gesture) so the siren isn't blocked later
     try {
@@ -75,7 +76,7 @@ const Security = (() => {
       if (audioCtx.state === 'suspended') audioCtx.resume();
     } catch (e) {}
     Store.set('security.alarmArmed', true);
-    App.toast('🛡️ Anti-theft armed — move detection on');
+    App.toast('🛡️ Anti-theft on — guards the bike whenever it’s locked');
     return true;
   }
   function disarm() {
@@ -86,8 +87,8 @@ const Security = (() => {
   }
 
   function onGPS(s) {
-    if (!Store.get('security.alarmArmed') || triggered) return;
-    // after a reboot, anchor to the first real fix (avoids the default→real jump)
+    // Only watch for movement while armed AND the screen is locked.
+    if (!Store.get('security.alarmArmed') || !Store.get('security.locked') || triggered) return;
     if (needsReanchor) { if (s.simulated) return; anchor = { ...s.coords }; needsReanchor = false; return; }
     if (!anchor) { anchor = { ...s.coords }; return; }
     const moved = haversineM(anchor, s.coords);
@@ -97,34 +98,45 @@ const Security = (() => {
   function trigger(moved) {
     triggered = true;
     startSiren();
-    if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
+    if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200, 600, 200, 600]);
     alarmOv = pinScreen({
       emoji: '🚨', danger: true, title: 'THEFT ALARM',
-      sub: `Bike moved ${Math.round(moved)} m — enter passcode to cancel`,
+      sub: `Bike moved ${Math.round(moved)} m — enter passcode to silence`,
       pin: Store.get('security.lockPin'),
-      onSuccess: () => { alarmOv = null; disarm(); App.toast('Alarm cancelled'); },
+      onSuccess: () => { alarmOv = null; stopSiren(); triggered = false; Store.set('security.locked', false); App.toast('Alarm silenced'); },
     });
   }
 
-  /* ---- siren via Web Audio (works with the USB speaker on the Pi) ---- */
+  /* ---- siren via Web Audio — MAX loudness, independent of media/music volume.
+   * Continuous detuned multi-oscillator two-tone siren pushed through a
+   * compressor at full gain (a web page can't exceed the OS volume, but this is
+   * the loudest the browser can produce and is separate from the music). On the
+   * Pi, also force-max the system/ALSA volume on boot for a real-world siren. */
   function startSiren() {
+    if (sirenNodes) return;
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const beep = () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const comp = audioCtx.createDynamicsCompressor(); // maximize perceived loudness
+      const master = audioCtx.createGain(); master.gain.value = 1.0;
+      comp.connect(master).connect(audioCtx.destination);
+      const oscs = [];
+      const add = (type, detune, gain) => {
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(880, audioCtx.currentTime);
-        o.frequency.linearRampToValueAtTime(1480, audioCtx.currentTime + 0.5);
-        g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.6, audioCtx.currentTime + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.55);
-        o.connect(g).connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + 0.6);
+        o.type = type; o.detune.value = detune; g.gain.value = gain;
+        o.connect(g).connect(comp); o.start(); oscs.push(o);
       };
-      beep(); sirenTimer = setInterval(beep, 650);
+      add('sawtooth', 0, 0.6); add('sawtooth', 14, 0.6); add('square', -8, 0.4); // harsh, loud
+      let hi = false;
+      const sweep = () => { hi = !hi; const f = hi ? 1560 : 760; oscs.forEach((o) => { try { o.frequency.setTargetAtTime(f, audioCtx.currentTime, 0.04); } catch (e) {} }); };
+      sweep(); sirenTimer = setInterval(sweep, 380);
+      sirenNodes = { oscs, comp, master };
     } catch (e) { /* audio unavailable */ }
   }
-  function stopSiren() { if (sirenTimer) { clearInterval(sirenTimer); sirenTimer = null; } }
+  function stopSiren() {
+    if (sirenTimer) { clearInterval(sirenTimer); sirenTimer = null; }
+    if (sirenNodes) { sirenNodes.oscs.forEach((o) => { try { o.stop(); } catch (e) {} }); sirenNodes = null; }
+  }
 
   function haversineM(a, b) {
     const R = 6371000, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;

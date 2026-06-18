@@ -107,7 +107,7 @@ const Settings = (() => {
         <div class="list-row" id="lock-now-row"><div class="lr-icon" style="background:#48484a">⏏︎</div>
           <div class="lr-main"><div class="lr-title">Lock Now</div><div class="lr-sub">Manual lock — no automatic locking</div></div><div class="lr-trail">›</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#ff453a">${Icons.shield}</div>
-          <div class="lr-main"><div class="lr-title">Anti-Theft Alarm</div><div class="lr-sub">Siren if the bike is moved while armed</div></div>
+          <div class="lr-main"><div class="lr-title">Anti-Theft Alarm</div><div class="lr-sub">Loud siren if the bike is moved while locked</div></div>
           <label class="switch"><input type="checkbox" id="sec-alarm" ${sec.alarmArmed?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
         <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">📍</div>
           <div class="lr-main"><div class="lr-title">Trigger Distance</div><div class="lr-sub">Ignore GPS drift / wind below this</div></div>

@@ -7,7 +7,7 @@ const Store = (() => {
     language: 'en',
     theme: 'dark',
     accent: '#0a84ff',
-    quickDial: [null, null, null, null],
+    quickDial: [null, null, null],
     groups: [], // each: { id, name, color, members:[{id,name,username,role}], messages:[], challenges:[] }
     parental: {
       enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false,

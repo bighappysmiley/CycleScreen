@@ -22,38 +22,32 @@ const Device = (() => {
     btDevice: null,
     weather: null,
     battery: 1,
-    simulated: true,
+    manual: false,
   };
 
-  /* ---------------- GPS ---------------- */
-  let simTimer = null, fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false;
+  /* ---------------- GPS (real device geolocation only — no simulation) ---------------- */
+  let fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false;
 
   function startGPS() {
-    // A user-set manual location wins over (often VPN-skewed) browser geolocation.
     const man = (typeof Store !== 'undefined') && Store.get('manualLocation');
     if (man) { applyManual(man, false); return; }
-    if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); simulateGPS(); return; }
+    if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); return; }
     if (!window.isSecureContext) { emit('gpsstatus', { state: 'insecure' }); App.toast && App.toast('⚠️ Location needs HTTPS'); }
-    if (window.self !== window.top) emit('gpsstatus', { state: 'iframe' });
     requestLocation();
-    // Fall back to simulation only if NOTHING (real or error) arrives in time.
-    fallbackTimer = setTimeout(() => { if (!state.hasFix) { emit('gpsstatus', { state: 'slow' }); simulateGPS(); } }, 9000);
   }
 
   function stopWatch() {
-    stopSim();
     clearTimeout(fallbackTimer);
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null;
   }
 
-  // Pin the rider to a manually chosen place (used when GPS/VPN is wrong).
+  // Pin the rider to a manually chosen place.
   function applyManual(man, persist = true) {
     stopWatch();
     if (persist) Store.set('manualLocation', man);
     state.coords = { lat: man.lat, lng: man.lng };
-    state.manual = true; state.simulated = false; state.hasFix = true; state.speedKmh = 0;
-    state.accuracy = 0;
+    state.manual = true; state.hasFix = true; state.speedKmh = 0; state.accuracy = 0;
     emit('gps', { ...state });
     emit('gpsstatus', { state: 'manual', label: man.label });
     fetchWeather();
@@ -69,28 +63,19 @@ const Device = (() => {
   // (Re)request location: a fast one-shot fix, plus a continuous high-accuracy watch.
   function requestLocation() {
     emit('gpsstatus', { state: 'locating' });
-    navigator.geolocation.getCurrentPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 });
+    navigator.geolocation.getCurrentPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 15000, timeout: 12000 });
     if (watchId != null) navigator.geolocation.clearWatch(watchId);
-    watchId = navigator.geolocation.watchPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 1000, timeout: 27000 });
+    watchId = navigator.geolocation.watchPosition(onRealFix, onGeoError, { enableHighAccuracy: true, maximumAge: 1000, timeout: 30000 });
   }
-
-  // Fixes coarser than this (metres) are almost certainly IP/Wi-Fi geolocation
-  // (e.g. a VPN exit), NOT the GPS dongle — don't let them drive navigation.
-  const COARSE_M = 150;
 
   function onRealFix(pos) {
     const c = pos.coords;
-    const accurate = c.accuracy != null && c.accuracy <= COARSE_M;
     if (state.manual) {
-      // Real GPS (accurate) takes over for navigation; a coarse IP/VPN fix does not.
-      if (!accurate) return;
+      // Real GPS takes over from a manual pin only once it's accurate enough to trust.
+      if (!(c.accuracy != null && c.accuracy <= 80)) return;
       state.manual = false;
       if (typeof Store !== 'undefined') Store.set('manualLocation', null);
-    } else if (!accurate && !state.hasFix) {
-      // First fix is coarse → show it but flag as approximate so the rider knows.
-      emit('gpsstatus', { state: 'coarse', accuracy: c.accuracy });
     }
-    stopSim();
     clearTimeout(fallbackTimer);
     const firstFix = lastReal === 0;
     lastReal = Date.now();
@@ -106,23 +91,20 @@ const Device = (() => {
     state.coords = { lat: c.latitude, lng: c.longitude };
     state.accuracy = c.accuracy || null;
     state.satellites = c.accuracy && c.accuracy < 25 ? 11 : 7;
-    state.hasFix = true; state.simulated = false;
+    state.hasFix = true;
     emit('gps', { ...state });
-    emit('gpsstatus', { state: 'live', accuracy: c.accuracy });
+    emit('gpsstatus', { state: (c.accuracy && c.accuracy > 200) ? 'coarse' : 'live', accuracy: c.accuracy });
     if (firstFix) fetchWeather();
   }
 
   function onGeoError(err) {
     // err.code: 1 PERMISSION_DENIED, 2 POSITION_UNAVAILABLE, 3 TIMEOUT
     if (err && err.code === 3 && !triedLowAccuracy) {
-      // high-accuracy timed out — retry with network/coarse location (faster)
-      triedLowAccuracy = true;
+      triedLowAccuracy = true; // high-accuracy timed out → retry coarse/network (faster)
       navigator.geolocation.getCurrentPosition(onRealFix, onGeoError, { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 });
       return;
     }
-    const reason = err && err.code === 1 ? 'denied' : err && err.code === 2 ? 'unavailable' : 'timeout';
-    emit('gpsstatus', { state: reason });
-    if (!state.hasFix || (Date.now() - lastReal > 20000)) simulateGPS();
+    emit('gpsstatus', { state: err && err.code === 1 ? 'denied' : err && err.code === 2 ? 'unavailable' : 'timeout' });
   }
 
   // Called from the UI to (re)prompt for location, e.g. after enabling permission.
@@ -163,31 +145,6 @@ const Device = (() => {
     const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
     const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-  }
-
-  function stopSim() { if (simTimer) { clearInterval(simTimer); simTimer = null; } }
-
-  function simulateGPS() {
-    if (simTimer || state.hasFix && !state.simulated) return;
-    state.simulated = true;
-    let t = 0, targetSpeed = 22;
-    simTimer = setInterval(() => {
-      t += 0.6;
-      // satellites lock-on
-      if (state.satellites < 11) state.satellites++;
-      state.hasFix = state.satellites >= 4;
-      // ease speed toward a wandering target
-      if (Math.random() < 0.04) targetSpeed = 6 + Math.random() * 30;
-      state.speedKmh += (targetSpeed - state.speedKmh) * 0.08;
-      if (Math.random() < 0.02) state.speedKmh = Math.max(0, state.speedKmh - 12); // stop sign
-      // move along a gently curving heading
-      state.heading = (state.heading + Math.sin(t / 5) * 3 + 360) % 360;
-      const metersPerTick = (state.speedKmh / 3.6) * 0.6;
-      const rad = (state.heading * Math.PI) / 180;
-      state.coords.lat += (metersPerTick * Math.cos(rad)) / 111320;
-      state.coords.lng += (metersPerTick * Math.sin(rad)) / (111320 * Math.cos(state.coords.lat * Math.PI / 180));
-      emit('gps', { ...state });
-    }, 600);
   }
 
   /* ---------------- Bluetooth (phone) ---------------- */

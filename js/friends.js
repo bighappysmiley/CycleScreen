@@ -265,7 +265,7 @@ const Friends = (() => {
       const joined = (c.participants || []).includes(meId);
       return `<div class="challenge-card ${c.type}"><h4>${esc(c.title)}</h4>
         <div class="meta">${c.type === 'race' ? '🏁 Race' : c.type === 'climb' ? '⛰️ Climb' : '📏 Distance'} · ${c.distance} km · ${(c.participants||[]).length} joined</div>
-        <div class="row"><span style="font-size:12px;opacity:.9">${joined ? `You: ${(live.simulated?0:live.speedKmh).toFixed(1)} km/h` : 'Tap to join'}</span>
+        <div class="row"><span style="font-size:12px;opacity:.9">${joined ? `You: ${live.speedKmh.toFixed(1)} km/h` : 'Tap to join'}</span>
           <button class="join" data-id="${c.id}">${joined ? '✓ Joined' : 'Join'}</button></div></div>`;
     }).join('') : '<div class="empty">No challenges yet.</div>'}
       ${manage ? `<button class="btn btn--block btn--pill" id="new-chal" style="margin-top:12px">🏁 Create Challenge (uses GPS)</button>` : ''}`;

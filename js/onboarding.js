@@ -73,8 +73,11 @@ const Onboarding = (() => {
       const av = root.querySelector('#au-avatar'), file = root.querySelector('#au-photo');
       av.onclick = () => file.click();
       file.onchange = () => {
-        photoFile = file.files[0]; if (!photoFile) return;
-        av.classList.add('has'); root.querySelector('#au-avatar-in').innerHTML = `<img src="${URL.createObjectURL(photoFile)}" alt="">`;
+        const f = file.files[0]; file.value = ''; if (!f) return;
+        Cropper.open(f, (blob) => {
+          photoFile = blob;
+          av.classList.add('has'); root.querySelector('#au-avatar-in').innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="">`;
+        });
       };
     }
 

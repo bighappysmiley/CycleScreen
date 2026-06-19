@@ -56,7 +56,7 @@ const Settings = (() => {
           <div class="lr-main"><div class="lr-title">Name</div></div><div class="lr-trail">${p.name} ›</div></div>
         <div class="list-row" id="edit-user"><div class="lr-icon" style="background:#5856d6">${Icons.at}</div>
           <div class="lr-main"><div class="lr-title">Username</div></div><div class="lr-trail">@${p.username} ›</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.ruler}</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.gauge}</div>
           <div class="lr-main"><div class="lr-title">Units</div></div>
           <div class="segmented" id="units-seg" style="width:160px">
             <button data-v="metric">km/h</button><button data-v="imperial">mph</button>
@@ -141,19 +141,21 @@ const Settings = (() => {
     unitsSeg.querySelectorAll('button').forEach((b) => b.onclick = () => { Store.set('profile.units', b.dataset.v); paintSeg(unitsSeg, b.dataset.v); Dashboard.refresh(); });
 
     // profile edits
-    // profile photo (Cloudinary)
+    // profile photo: pick → crop (pan/zoom) → upload to Cloudinary
     const avBtn = host.querySelector('#pf-avatar'), photoIn = host.querySelector('#pf-photo');
     avBtn.onclick = () => photoIn.click();
-    photoIn.onchange = async () => {
-      const f = photoIn.files[0]; if (!f) return;
+    photoIn.onchange = () => {
+      const f = photoIn.files[0]; photoIn.value = ''; if (!f) return;
       if (!(window.CYCLESCREEN_CLOUDINARY || {}).cloudName) return App.toast('Set up Cloudinary to upload photos');
-      App.toast('Uploading photo…');
-      try {
-        const url = await Cloud.uploadImage(f);
-        Store.set('profile.photo', url);
-        if (Cloud.enabled && Cloud.user()) await Cloud.setPhoto(url);
-        Dashboard.refresh(); render(host);
-      } catch (e) { App.toast('Photo upload failed'); }
+      Cropper.open(f, async (blob) => {
+        App.toast('Uploading photo…');
+        try {
+          const url = await Cloud.uploadImage(blob);
+          Store.set('profile.photo', url);
+          if (Cloud.enabled && Cloud.user()) await Cloud.setPhoto(url);
+          Dashboard.refresh(); render(host);
+        } catch (e) { App.toast('Photo upload failed'); }
+      });
     };
 
     host.querySelector('#edit-name').onclick = () => editField('Name', 'name', () => render(host));
@@ -173,7 +175,6 @@ const Settings = (() => {
       const el = host.querySelector('#about-gps'); if (!el) return;
       el.textContent = man ? `Set manually: ${man.label}`
         : !s.hasFix ? 'Locating…'
-        : s.simulated ? 'Simulated (using GPS)'
         : `Live${s.accuracy ? ' · ±' + Math.round(s.accuracy) + 'm' : ''}`;
     };
     gpsLabel();
@@ -344,7 +345,7 @@ const Settings = (() => {
       </div>`).join('') + `<button class="btn btn--block" id="dialsave" style="margin-top:6px">Save Contacts</button>`,
     (root, close) => {
       root.querySelector('#dialsave').onclick = () => {
-        const next = [null,null,null,null];
+        const next = [null,null,null];
         root.querySelectorAll('input[data-i]').forEach((inp) => {
           const i = +inp.dataset.i; next[i] = next[i] || {};
           next[i][inp.dataset.f] = inp.value.trim();

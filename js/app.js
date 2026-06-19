@@ -75,7 +75,7 @@ const App = (() => {
     f.style.width = Math.round(level * 100) + '%';
     f.style.background = level < 0.2 ? 'var(--danger)' : level < 0.4 ? 'var(--warn)' : 'var(--accent-2)';
   }
-  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.manual ? 'SET' : s.hasFix ? (s.simulated ? 'SIM' : s.satellites) : '…'; }
+  function paintGPS(s) { document.getElementById('gps-sats').textContent = s.manual ? 'SET' : s.hasFix ? s.satellites : '…'; }
 
   let warnedDenied = false;
   function onGpsStatus(st) {
@@ -154,14 +154,43 @@ const App = (() => {
     if (tel) { try { window.location.href = 'tel:' + tel; } catch (e) {} }
   }
 
+  const WX = { 0:['☀️','Clear'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Cloudy'],45:['🌫️','Fog'],48:['🌫️','Fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Drizzle'],61:['🌦️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],71:['🌨️','Light snow'],73:['🌨️','Snow'],75:['❄️','Heavy snow'],80:['🌦️','Showers'],81:['🌧️','Showers'],82:['⛈️','Heavy showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm'],99:['⛈️','Thunderstorm'] };
+  const wxGlyph = (c) => (WX[c] || ['🌡️', 'Weather']);
+
   function weatherSheet() {
-    const w = Device.state.weather || { glyph: '⛅', temp: '--', desc: '…', wind: 0 };
-    sheet('Weather', `<div style="text-align:center;padding:8px 0">
-      <div style="font-size:64px">${w.glyph}</div>
-      <div style="font-size:40px;font-weight:700">${w.temp}°</div>
-      <div style="color:var(--text-2)">${w.desc} • Wind ${w.wind} km/h</div>
-      <div style="color:var(--text-3);font-size:12px;margin-top:10px">At your current GPS location</div>
-    </div>`);
+    const imperial = Store.get('profile.units') === 'imperial';
+    const w = Device.state.weather || { glyph: '⛅', temp: null, desc: '…', wind: 0 };
+    const t = (c) => c == null ? '--' : Math.round(imperial ? c * 9 / 5 + 32 : c) + '°';
+    const tempC = Device.state.weather ? Device.state.weather.temp : null;
+    const close = sheet('Weather', `
+      <div style="text-align:center;padding:4px 0 2px">
+        <div style="font-size:60px;line-height:1">${w.glyph}</div>
+        <div style="font-size:38px;font-weight:700;letter-spacing:-1px">${t(tempC)}</div>
+        <div style="color:var(--text-2)">${w.desc} · Wind ${w.wind} ${imperial ? 'mph' : 'km/h'}</div>
+        <div style="color:var(--text-3);font-size:12px;margin-top:8px">${Store.get('manualLocation') ? Store.get('manualLocation').label : 'At your current location'}</div>
+      </div>
+      <button class="btn btn--block btn--pill" id="wx-expand" style="margin-top:14px">Show forecast</button>
+      <div id="wx-forecast"></div>`, (root) => {
+      root.querySelector('#wx-expand').onclick = async (e) => {
+        const box = root.querySelector('#wx-forecast');
+        if (box.dataset.open) { box.innerHTML = ''; delete box.dataset.open; e.target.textContent = 'Show forecast'; return; }
+        e.target.textContent = 'Loading…';
+        try {
+          const { lat, lng } = Device.state.coords;
+          const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&daily=weather_code,temperature_2m_max,temperature_2m_min&past_days=2&forecast_days=7&timezone=auto`);
+          const j = await r.json(); const d = j.daily;
+          const todayISO = new Date().toISOString().slice(0, 10);
+          box.innerHTML = `<div class="list" style="margin-top:12px">` + d.time.map((iso, i) => {
+            const [g, desc] = wxGlyph(d.weather_code[i]);
+            const day = iso === todayISO ? 'Today' : new Date(iso + 'T00:00').toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            return `<div class="list-row"><div style="width:34px;text-align:center;font-size:20px">${g}</div>
+              <div class="lr-main"><div class="lr-title" style="font-size:14px${iso === todayISO ? ';font-weight:700' : ''}">${day}</div><div class="lr-sub">${desc}</div></div>
+              <div class="lr-trail"><b>${t(d.temperature_2m_max[i])}</b> <span style="color:var(--text-3)">${t(d.temperature_2m_min[i])}</span></div></div>`;
+          }).join('') + `</div>`;
+          box.dataset.open = '1'; e.target.textContent = 'Hide forecast';
+        } catch { e.target.textContent = 'Forecast unavailable'; }
+      };
+    });
   }
   /* ---- parental lock gate on boot ---- */
   function init() {

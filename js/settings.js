@@ -20,7 +20,7 @@ const Settings = (() => {
       <div class="profile-head">
         <div class="avatar-wrap">
           <button class="avatar avatar-edit" id="pf-avatar" title="Change photo">${p.photo ? `<img src="${p.photo}" alt="">` : (p.initials || '👤')}</button>
-          <span class="avatar-cam">📷</span>
+          <span class="avatar-cam">${Icons.camera}</span>
         </div>
         <input type="file" id="pf-photo" accept="image/*" hidden />
         <div class="pname">${p.name}</div>
@@ -45,18 +45,18 @@ const Settings = (() => {
 
       ${Cloud.enabled ? `<div class="list-section-title">Account</div>
       <div class="list">
-        <div class="list-row"><div class="lr-icon" style="background:#30d158">✅</div>
+        <div class="list-row"><div class="lr-icon" style="background:#30d158">${Icons.check}</div>
           <div class="lr-main"><div class="lr-title">${Cloud.user() ? 'Signed in' : 'Not signed in'}</div><div class="lr-sub">${Cloud.user() ? '@' + Cloud.user().username + ' · synced' : 'Local only'}</div></div></div>
-        ${Cloud.user() ? `<div class="list-row" id="signout-row"><div class="lr-icon" style="background:#ff453a">⎋</div><div class="lr-main"><div class="lr-title">Sign Out</div></div><div class="lr-trail">›</div></div>` : ''}
+        ${Cloud.user() ? `<div class="list-row" id="signout-row"><div class="lr-icon" style="background:#ff453a">${Icons.signout}</div><div class="lr-main"><div class="lr-title">Sign Out</div></div><div class="lr-trail">›</div></div>` : ''}
       </div>` : ''}
 
       <div class="list-section-title">Profile</div>
       <div class="list">
-        <div class="list-row" id="edit-name"><div class="lr-icon" style="background:#0a84ff">👤</div>
+        <div class="list-row" id="edit-name"><div class="lr-icon" style="background:#0a84ff">${Icons.user}</div>
           <div class="lr-main"><div class="lr-title">Name</div></div><div class="lr-trail">${p.name} ›</div></div>
-        <div class="list-row" id="edit-user"><div class="lr-icon" style="background:#5856d6">＠</div>
+        <div class="list-row" id="edit-user"><div class="lr-icon" style="background:#5856d6">${Icons.at}</div>
           <div class="lr-main"><div class="lr-title">Username</div></div><div class="lr-trail">@${p.username} ›</div></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">📐</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.ruler}</div>
           <div class="lr-main"><div class="lr-title">Units</div></div>
           <div class="segmented" id="units-seg" style="width:160px">
             <button data-v="metric">km/h</button><button data-v="imperial">mph</button>
@@ -96,7 +96,7 @@ const Settings = (() => {
         <div class="list-row"><div class="lr-icon" style="background:#0a84ff">${Icons.chat}</div>
           <div class="lr-main"><div class="lr-title">Group Messaging</div><div class="lr-sub" id="gm-sub">Choose which groups can be messaged</div></div>
           <div class="lr-trail" id="par-groups">Edit ›</div></div>
-        <div class="list-row" id="par-pin"><div class="lr-icon" style="background:#8e8e93">🔑</div>
+        <div class="list-row" id="par-pin"><div class="lr-icon" style="background:#8e8e93">${Icons.key}</div>
           <div class="lr-main"><div class="lr-title">${par.pin?'Change':'Set'} Parental PIN</div><div class="lr-sub">Separate from your lock passcode</div></div><div class="lr-trail">›</div></div>
       </div>
 
@@ -104,12 +104,12 @@ const Settings = (() => {
       <div class="list">
         <div class="list-row" id="lock-pin"><div class="lr-icon" style="background:#1c1c1e;border:1px solid var(--hairline)">${Icons.lock}</div>
           <div class="lr-main"><div class="lr-title">${sec.lockPin?'Change':'Set'} Lock Passcode</div><div class="lr-sub">Required to unlock the screen & cancel the alarm</div></div><div class="lr-trail">›</div></div>
-        <div class="list-row" id="lock-now-row"><div class="lr-icon" style="background:#48484a">⏏︎</div>
+        <div class="list-row" id="lock-now-row"><div class="lr-icon" style="background:#48484a">${Icons.lock}</div>
           <div class="lr-main"><div class="lr-title">Lock Now</div><div class="lr-sub">Manual lock — no automatic locking</div></div><div class="lr-trail">›</div></div>
         <div class="list-row"><div class="lr-icon" style="background:#ff453a">${Icons.shield}</div>
           <div class="lr-main"><div class="lr-title">Anti-Theft Alarm</div><div class="lr-sub">Loud siren if the bike is moved while locked</div></div>
           <label class="switch"><input type="checkbox" id="sec-alarm" ${sec.alarmArmed?'checked':''}><span class="track"></span><span class="thumb"></span></label></div>
-        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">📍</div>
+        <div class="list-row"><div class="lr-icon" style="background:#ff9f0a">${Icons.mappin}</div>
           <div class="lr-main"><div class="lr-title">Trigger Distance</div><div class="lr-sub">Ignore GPS drift / wind below this</div></div>
           <div class="lr-trail"><input class="field" id="sec-thresh" type="number" min="5" style="width:60px;margin:0;padding:7px;text-align:center" value="${sec.alarmThresholdM}"> m</div></div>
       </div>
@@ -117,7 +117,7 @@ const Settings = (() => {
       <div class="list-section-title">About</div>
       <div class="list">
         <div class="list-row"><div class="lr-main"><div class="lr-title">CycleScreen</div><div class="lr-sub">Raspberry Pi • 7″ display • GLONASS GPS</div></div><div class="lr-trail">v1.0</div></div>
-        <div class="list-row" id="gps-row"><div class="lr-icon" style="background:#34c759">📍</div>
+        <div class="list-row" id="gps-row"><div class="lr-icon" style="background:#34c759">${Icons.mappin}</div>
           <div class="lr-main"><div class="lr-title">Location</div><div class="lr-sub" id="about-gps">—</div></div>
           <div class="lr-trail" id="gps-retry">Use my location ›</div></div>
       </div>

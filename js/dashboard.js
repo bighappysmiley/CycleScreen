@@ -110,7 +110,7 @@ const Dashboard = (() => {
     ride.active ? endRide() : startRide();
   }
   function startRide() {
-    ride.active = true; ride.startTs = Date.now(); ride.distanceKm = 0; ride.lastFix = { ...Device.state.coords }; ride.elapsed = 0;
+    ride.active = true; ride.startTs = Date.now(); ride.distanceKm = 0; ride.lastFix = { ...Device.state.coords }; ride.elapsed = 0; ride.bpm = 0;
     document.getElementById('ride-card').classList.add('active');
     document.getElementById('ride-btn').textContent = I18n.t('end_ride');
     rideTimer = setInterval(tickRide, 1000);

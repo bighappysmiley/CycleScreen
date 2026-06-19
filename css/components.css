@@ -67,7 +67,8 @@
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .avatar-wrap { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; }
-.avatar-cam { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg-elev); display: grid; place-items: center; font-size: 12px; box-shadow: var(--shadow-1); border: 1px solid var(--hairline); pointer-events: none; }
+.avatar-cam { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg-elev); display: grid; place-items: center; color: var(--text-2); box-shadow: var(--shadow-1); border: 1px solid var(--hairline); pointer-events: none; }
+.avatar-cam svg { width: 13px; height: 13px; }
 
 /* Modal sheet */
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1500; opacity: 0; transition: opacity .25s; }

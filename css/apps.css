@@ -57,28 +57,6 @@
 .app-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .app-pad { padding: 16px; }
 
-/* ---------- Music (24SIX-style) ---------- */
-.music-hero { padding: 16px; display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--hairline); }
-.music-art { width: 78px; height: 78px; border-radius: 14px; background: var(--fill); display: grid; place-items: center; font-size: 32px; color: var(--text-2); box-shadow: var(--shadow-1); flex: 0 0 auto; overflow: hidden; }
-.music-art img { width: 100%; height: 100%; object-fit: cover; }
-.music-art.spin { animation: spin 8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.music-meta { min-width: 0; }
-.music-track-title { font-size: 19px; font-weight: 700; }
-.music-track-artist { font-size: 14px; color: var(--text-2); margin-top: 2px; }
-.music-brand { font-size: 11px; font-weight: 700; color: var(--purple); letter-spacing: 1px; margin-bottom: 4px; }
-.music-progress { height: 4px; background: var(--fill); border-radius: 2px; margin: 14px 16px 4px; overflow: hidden; }
-.music-progress .fill { height: 100%; background: var(--text); width: 0%; }
-.music-times { display: flex; justify-content: space-between; padding: 0 16px; font-size: 11px; color: var(--text-2); }
-.music-controls { display: flex; align-items: center; justify-content: center; gap: 26px; padding: 14px 0 6px; }
-.music-controls button { color: var(--text); transition: transform .12s; }
-.music-controls button:active { transform: scale(.85); }
-.music-play { width: 60px; height: 60px; border-radius: 50%; background: var(--text); color: var(--bg) !important; display: grid; place-items: center; }
-.music-extra { display: flex; justify-content: center; gap: 30px; padding: 4px 0 10px; color: var(--text-2); }
-.music-extra button.on { color: var(--accent); }
-.playlist-row .lr-icon { background: var(--fill); color: var(--text-2); font-size: 15px; }
-.playlist-row.playing .lr-title { color: var(--accent-2); }
-
 /* ---------- Music service hub ---------- */
 .svc-bar { display: flex; gap: 6px; padding: 10px 14px; overflow-x: auto; border-bottom: 1px solid var(--hairline); }
 .svc { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 7px 13px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--fill-2); color: var(--text-2); border: 1px solid var(--hairline); transition: all .15s; }
@@ -94,7 +72,7 @@
 .coming-soon .cs-badge { display: inline-block; background: var(--fill); color: var(--text-2); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
 .coming-soon p { color: var(--text-2); font-size: 13px; max-width: 300px; margin: 14px auto 0; }
 
-/* ---------- Finish (ride app) ---------- */
+/* ---------- Fitness (ride app) ---------- */
 .finish-timer { text-align: center; font-size: 48px; font-weight: 700; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; padding: 18px 0 6px; }
 .finish-timer.live { color: var(--accent); }
 .finish-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
@@ -108,27 +86,15 @@
 @keyframes hrbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.06); } 28% { transform: scale(1); } }
 .watch-status { font-size: 13px; color: var(--text-2); margin-top: 8px; }
 
-/* ---------- Music service embed (Spotify / Apple) ---------- */
+/* ---------- Music service embed (Spotify) ---------- */
 .embed-wrap { height: 100%; display: flex; flex-direction: column; padding: 12px; }
 .embed-frame { flex: 1; width: 100%; border: 0; border-radius: var(--radius-lg); background: var(--bg-elev); min-height: 360px; }
 
-/* ---------- (legacy) 24six embed ---------- */
-.t24-wrap { display: flex; flex-direction: column; height: 100%; }
-.t24-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--hairline); flex: 0 0 auto; }
-.t24-bar .music-brand { color: var(--purple); letter-spacing: 1px; }
-.t24-frame { flex: 1; width: 100%; border: 0; background: #fff; }
-.t24-fallback { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-
 /* ---------- Friends ---------- */
 .friends-tabs { padding: 10px 16px 0; }
-.friend-row .avatar { width: 44px; height: 44px; font-size: 16px; }
-.presence { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bg-elev); position: absolute; bottom: 0; right: 0; }
-.presence.online { background: var(--accent-2); } .presence.riding { background: var(--accent); } .presence.offline { background: var(--text-3); }
-.friend-av-wrap { position: relative; }
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
 .emoji-chip { font-size: 22px; padding: 6px 9px; background: var(--fill-2); border-radius: 12px; transition: transform .1s; }
 .emoji-chip:active { transform: scale(1.25); }
-.voice-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .voice-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--danger); color:#fff; display: grid; place-items: center; flex:0 0 auto; }
 .voice-btn.rec { animation: recpulse 1s infinite; }
 @keyframes recpulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,69,58,.5)} 50%{box-shadow:0 0 0 12px rgba(255,69,58,0)} }

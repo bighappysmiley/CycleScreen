@@ -12,11 +12,11 @@ const Store = (() => {
     parental: {
       enabled: false, pin: '', maxSpeedAlert: 30, blockMusic: false, blockFriends: false,
       bikeTime: { enabled: false, start: '21:00', end: '07:00' },
-      musicServices: { spotify: true },
+      musicServices: { '24six': true, apple: true, spotify: true, local: true },
       msgBlockedGroups: [], // group ids the user may NOT message in
     },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
-    music: { volume: 0.7, shuffle: false, repeat: false, service: 'spotify' },
+    music: { volume: 0.7, shuffle: false, repeat: false, service: 'local' },
     lastRide: null, // { date, distanceKm, durationSec, avgKmh }
     rides: [],      // ride history (newest first)
     manualLocation: null, // { lat, lng, label } — overrides GPS when set

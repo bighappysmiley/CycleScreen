@@ -93,9 +93,24 @@
 @keyframes hrbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.06); } 28% { transform: scale(1); } }
 .watch-status { font-size: 13px; color: var(--text-2); margin-top: 8px; }
 
-/* ---------- Music service embed (Spotify) ---------- */
-.embed-wrap { height: 100%; display: flex; flex-direction: column; padding: 12px; }
-.embed-frame { flex: 1; width: 100%; border: 0; border-radius: var(--radius-lg); background: var(--bg-elev); min-height: 360px; }
+/* ---------- Local music player ---------- */
+.local-np { display: flex; align-items: center; gap: 14px; padding: 16px; border-bottom: 1px solid var(--hairline); }
+.local-art { width: 64px; height: 64px; border-radius: 14px; background: var(--fill); display: grid; place-items: center; color: var(--text-2); flex: 0 0 auto; }
+.local-art svg { width: 28px; height: 28px; }
+.local-art.spin { animation: spin 6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.local-meta { min-width: 0; }
+.music-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; color: var(--accent-2); }
+.local-title { font-size: 17px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.local-controls { display: flex; align-items: center; justify-content: center; gap: 28px; padding: 14px 0 6px; color: var(--text); }
+.local-controls button { color: var(--text); display: grid; place-items: center; transition: transform .12s; }
+.local-controls button:active { transform: scale(.88); }
+.music-play { width: 56px; height: 56px; border-radius: 50%; background: var(--text); color: var(--bg) !important; display: grid; place-items: center; }
+.local-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.track-row.playing .lr-title { color: var(--accent-2); font-weight: 600; }
+.track-del { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--text-3); flex: 0 0 auto; }
+.track-del:active { background: var(--fill); color: var(--danger); }
+.track-del svg { width: 15px; height: 15px; }
 
 /* ---------- Friends ---------- */
 .friends-tabs { padding: 10px 16px 0; }

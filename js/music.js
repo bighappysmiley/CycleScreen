@@ -1,51 +1,139 @@
-/* music.js — Spotify via its official embed player.
- *
- * Spotify's iframe embed is designed to be framed (no X-Frame-Options issues):
- * it plays previews for everyone and full tracks for signed-in subscribers. The
- * embedded content (playlist/album) is configurable in js/firebase-config.js →
- * window.CYCLESCREEN_MUSIC. (Apple Music was removed — commonly blocked by
- * content filters; the SERVICES array makes it easy to add services back.)
+/* music.js — Music app with a service sidebar (24Six / Apple Music / Spotify /
+ * Local). The streaming services are Coming Soon; "Local" is a working player
+ * for music transferred onto the device (e.g. over Bluetooth), imported via the
+ * file picker and kept in IndexedDB so it persists across reloads.
  */
 const Music = (() => {
-  const cfg = () => window.CYCLESCREEN_MUSIC || {};
-
   const SERVICES = [
-    { id: 'spotify', name: 'Spotify', color: '#1db954', logo: Icons.spotify },
+    { id: '24six',   name: '24Six',       color: '#bf5af2', logo: Icons.note,    soon: true },
+    { id: 'apple',   name: 'Apple Music', color: '#fa233b', logo: Icons.apple,   soon: true },
+    { id: 'spotify', name: 'Spotify',     color: '#1db954', logo: Icons.spotify, soon: true },
+    { id: 'local',   name: 'Local',       color: '#34c759', logo: Icons.download },
   ];
   const allowed = (id) => !Store.get('parental.enabled') || (Store.get('parental.musicServices') || {})[id] !== false;
 
-  let host = null, mount = null, service = Store.get('music.service') || 'spotify';
+  let host = null, mount = null, service = Store.get('music.service') || 'local';
 
-  function render(h) {
-    host = h;
-    if (!allowed(service)) service = SERVICES.find((s) => allowed(s.id))?.id || 'spotify';
-    renderHub();
+  /* ---------------- local library (IndexedDB) ---------------- */
+  const DB = 'cyclescreen-music', STORE = 'tracks';
+  function db() { return new Promise((res, rej) => { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+  async function libList() { const d = await db(); return new Promise((res) => { const out = []; const tx = d.transaction(STORE); tx.objectStore(STORE).openCursor().onsuccess = (e) => { const c = e.target.result; if (c) { out.push({ id: c.value.id, name: c.value.name }); c.continue(); } else res(out); }; }); }
+  async function libGet(id) { const d = await db(); return new Promise((res) => { const r = d.transaction(STORE).objectStore(STORE).get(id); r.onsuccess = () => res(r.result); }); }
+  async function libPut(t) { const d = await db(); return new Promise((res) => { const tx = d.transaction(STORE, 'readwrite'); tx.objectStore(STORE).put(t); tx.oncomplete = res; }); }
+  async function libDel(id) { const d = await db(); return new Promise((res) => { const tx = d.transaction(STORE, 'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete = res; }); }
+
+  const audio = new Audio();
+  let library = [], idx = -1, playing = false, curUrl = null;
+  const niceName = (n) => n.replace(/\.[a-z0-9]+$/i, '');
+
+  audio.addEventListener('play', () => { playing = true; paintLocal(); });
+  audio.addEventListener('pause', () => { playing = false; paintLocal(); });
+  audio.addEventListener('ended', () => next());
+
+  async function playIndex(i) {
+    if (i < 0 || i >= library.length) return;
+    idx = i;
+    const rec = await libGet(library[i].id);
+    if (!rec) return;
+    if (curUrl) URL.revokeObjectURL(curUrl);
+    curUrl = URL.createObjectURL(rec.blob);
+    audio.src = curUrl;
+    audio.play().catch(() => App.toast('Tap play to start audio'));
+    renderLocal();
   }
+  function toggle() { if (idx < 0) return playIndex(0); playing ? audio.pause() : audio.play(); }
+  function next() { if (library.length) playIndex((idx + 1) % library.length); }
+  function prev() { if (library.length) playIndex((idx - 1 + library.length) % library.length); }
+
+  /* ---------------- UI ---------------- */
+  function render(h) { host = h; if (!allowed(service)) service = SERVICES.find((s) => allowed(s.id))?.id || 'local'; renderHub(); }
 
   function renderHub() {
-    // Single service → no tab bar needed; show more than one and the bar appears.
-    const bar = SERVICES.length > 1 ? `<div class="svc-bar">${SERVICES.map((s) => `
+    host.innerHTML = `
+      <div class="svc-bar">${SERVICES.map((s) => `
         <button class="svc ${service === s.id ? 'on' : ''} ${!allowed(s.id) ? 'locked' : ''}" data-s="${s.id}" style="--svc:${s.color}">
-          <span class="svc-logo">${s.logo}</span>${s.name}${!allowed(s.id) ? '<span class="svc-lock">' + Icons.lock + '</span>' : ''}</button>`).join('')}</div>` : '';
-    host.innerHTML = `${bar}<div class="svc-body" id="svc-body"></div>`;
+          <span class="svc-logo">${s.logo}</span>${s.name}${!allowed(s.id) ? '<span class="svc-lock">' + Icons.lock + '</span>' : ''}</button>`).join('')}</div>
+      <div class="svc-body" id="svc-body"></div>`;
     host.querySelectorAll('.svc').forEach((b) => b.onclick = () => {
       if (!allowed(b.dataset.s)) return App.toast('Restricted by Parental Controls');
       service = b.dataset.s; Store.set('music.service', service); renderHub();
     });
     mount = host.querySelector('#svc-body');
-    renderSpotify();
+    const svc = SERVICES.find((s) => s.id === service);
+    svc.soon ? renderComingSoon(svc) : renderLocal();
   }
 
-  function frame(src) {
-    return `<div class="embed-wrap"><iframe class="embed-frame" src="${src}"
-      allow="autoplay *; encrypted-media *; clipboard-write; fullscreen"
-      loading="lazy"></iframe></div>`;
+  function renderComingSoon(svc) {
+    mount.innerHTML = `
+      <div class="coming-soon">
+        <div class="cs-logo" style="background:${svc.color}">${svc.logo}</div>
+        <h2>${svc.name}</h2>
+        <div class="cs-badge">Coming Soon</div>
+        <p>Streaming from ${svc.name} will arrive in a future CycleScreen update. For now, use <b>Local</b> for your own music.</p>
+      </div>`;
   }
 
-  function renderSpotify() {
-    const path = cfg().spotify || 'playlist/37i9dQZF1DXcBWIGoYBM5M'; // Today's Top Hits (default)
-    mount.innerHTML = frame(`https://open.spotify.com/embed/${path}?utm_source=cyclescreen`);
+  async function renderLocal() {
+    library = await libList();
+    const cur = idx >= 0 && library[idx];
+    mount.innerHTML = `
+      <div class="local-np">
+        <div class="local-art ${playing ? 'spin' : ''}">${Icons.note}</div>
+        <div class="local-meta">
+          <div class="music-kicker">LOCAL · ${cur ? (playing ? 'PLAYING' : 'PAUSED') : 'READY'}</div>
+          <div class="local-title">${cur ? esc(niceName(cur.name)) : 'No track selected'}</div>
+        </div>
+      </div>
+      <div class="local-controls">
+        <button id="lp-prev" aria-label="Previous"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5" fill="currentColor"/></svg></button>
+        <button id="lp-play" class="music-play"></button>
+        <button id="lp-next" aria-label="Next"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14" fill="currentColor"/></svg></button>
+      </div>
+      <div class="app-pad">
+        <div class="local-head">
+          <div class="list-section-title" style="margin:0">Library · ${library.length}</div>
+          <button class="btn btn--pill" id="lp-add" style="padding:7px 14px;font-size:13px">＋ Add music</button>
+        </div>
+        <input type="file" id="lp-file" accept="audio/*" multiple hidden />
+        ${library.length ? `<div class="list">${library.map((t, i) => `
+          <div class="list-row track-row ${i === idx ? 'playing' : ''}" data-i="${i}">
+            <div class="lr-icon" style="background:${i === idx && playing ? 'var(--accent-2)' : 'var(--fill)'};color:${i === idx && playing ? '#fff' : 'var(--text-2)'}">${Icons.note}</div>
+            <div class="lr-main"><div class="lr-title">${esc(niceName(t.name))}</div></div>
+            <button class="track-del" data-del="${t.id}" aria-label="Remove">${Icons.trash}</button>
+          </div>`).join('')}</div>`
+          : `<div class="empty">No local music yet.<br>Transfer songs to the device over Bluetooth, then tap <b>Add music</b>.</div>`}
+      </div>`;
+
+    paintLocal();
+    mount.querySelector('#lp-play').onclick = toggle;
+    mount.querySelector('#lp-next').onclick = next;
+    mount.querySelector('#lp-prev').onclick = prev;
+    mount.querySelector('#lp-add').onclick = () => mount.querySelector('#lp-file').click();
+    mount.querySelector('#lp-file').onchange = async (e) => {
+      const files = [...e.target.files]; e.target.value = '';
+      for (const f of files) await libPut({ id: 'l' + Date.now() + Math.random().toString(36).slice(2, 6), name: f.name, blob: f });
+      if (files.length) App.toast(`Added ${files.length} track${files.length > 1 ? 's' : ''}`);
+      renderLocal();
+    };
+    mount.querySelectorAll('.track-row').forEach((r) => r.onclick = () => playIndex(+r.dataset.i));
+    mount.querySelectorAll('.track-del').forEach((b) => b.onclick = async (e) => {
+      e.stopPropagation();
+      const id = b.dataset.del;
+      const removingCur = idx >= 0 && library[idx] && library[idx].id === id;
+      if (removingCur) { audio.pause(); audio.removeAttribute('src'); idx = -1; }
+      await libDel(id); renderLocal();
+    });
   }
+
+  function paintLocal() {
+    const b = mount && mount.querySelector('#lp-play'); if (!b) return;
+    b.innerHTML = playing
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+      : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px"><path d="M7 4l13 8-13 8V4z"/></svg>';
+    const art = mount.querySelector('.local-art'); if (art) art.classList.toggle('spin', playing);
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
   return { render };
 })();

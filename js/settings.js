@@ -245,11 +245,11 @@ const Settings = (() => {
     });
 
     // Music services allow-list
-    const svcName = (k) => k === 'apple' ? 'Apple' : 'Spotify';
+    const svcName = (k) => ({ '24six': '24Six', apple: 'Apple', spotify: 'Spotify', local: 'Local' }[k] || k);
     const ms = par.musicServices || { spotify: true };
     host.querySelector('#ms-sub').textContent = Object.keys(ms).filter((k) => ms[k] !== false).map(svcName).join(', ') || 'None';
     gateRow(host.querySelector('#par-services'), () => {
-      const svcs = [['spotify', 'Spotify']];
+      const svcs = [['local', 'Local'], ['24six', '24Six'], ['apple', 'Apple Music'], ['spotify', 'Spotify']];
       App.sheet('Music Services', svcs.map(([id, name]) => `
         <div class="list-row" style="padding-left:0"><div class="lr-main"><div class="lr-title">${name}</div></div>
           <label class="switch"><input type="checkbox" data-svc="${id}" ${ms[id] !== false ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></label></div>`).join(''),

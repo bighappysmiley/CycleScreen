@@ -12,8 +12,8 @@ const Dashboard = (() => {
     const unit = p.units === 'imperial' ? 'mph' : 'km/h';
     document.getElementById('rail-speed-unit').textContent = unit;
     document.getElementById('ov-speed-unit').textContent = unit.toUpperCase();
-    document.getElementById('ride-avg').nextElementSibling.textContent = unit;
-    document.getElementById('ride-dist').nextElementSibling.textContent = p.units === 'imperial' ? 'mi' : 'km';
+    document.getElementById('lbl-avg').textContent = unit;
+    document.getElementById('lbl-dist').textContent = p.units === 'imperial' ? 'mi' : 'km';
     applyLabels();
     renderDials();
     paintSpeed(Device.state.speedKmh);

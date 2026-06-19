@@ -91,7 +91,8 @@
 .rail-name { font-size: 15px; font-weight: 600; margin-top: 0; }
 .rail-presence { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); font-weight: 500; }
 .rail-presence .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2); }
-.rail-gear { color: var(--text-3); font-size: 16px; padding: 4px; }
+.rail-gear { color: var(--text-3); padding: 4px; display: grid; place-items: center; }
+.rail-gear svg { width: 18px; height: 18px; }
 
 /* ---- Quick dial as rows (hold to edit) ---- */
 .dial-list { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; }

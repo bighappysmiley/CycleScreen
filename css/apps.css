@@ -18,9 +18,9 @@
 .appdrawer.open { transform: translateY(0); }
 .appdrawer-handle { width: 40px; height: 5px; border-radius: 3px; background: var(--text-3); margin: 0 auto 6px; flex: 0 0 auto; }
 .drawer-grid {
-  flex: 1; padding: 18px 36px 8px;
-  display: grid; grid-template-columns: repeat(5, 1fr); align-content: start;
-  gap: 22px 18px; overflow-y: auto;
+  flex: 1; padding: 24px; overflow-y: auto;
+  display: grid; grid-template-columns: repeat(3, 76px);
+  justify-content: center; align-content: center; gap: 26px 34px;
 }
 .app-icon { display: flex; flex-direction: column; align-items: center; gap: 7px; animation: appin .4s var(--ease-spring) both; }
 @keyframes appin { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
@@ -64,6 +64,7 @@
 .svc.locked { opacity: .55; }
 .svc-logo { display: grid; place-items: center; }
 .svc-logo svg { width: 15px; height: 15px; }
+.svc-body { height: 100%; }
 .svc-lock svg { width: 12px; height: 12px; }
 .coming-soon { text-align: center; padding: 40px 24px; }
 .coming-soon .cs-logo { width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center; color: #fff; margin: 0 auto 14px; box-shadow: var(--shadow-1); }
@@ -79,7 +80,13 @@
 .finish-stat { background: var(--fill-2); border: 1px solid var(--hairline); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; align-items: center; }
 .finish-stat b { font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
 .finish-stat small { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-.watch-hero { text-align: center; padding: 24px 0 18px; }
+.watch-hero { text-align: center; padding: 22px 0 18px; }
+.watch-heart { color: var(--text-3); margin-bottom: 6px; }
+.watch-heart svg { width: 30px; height: 30px; }
+.watch-heart.live { color: var(--pink); animation: hrbeat 1s ease-in-out infinite; }
+.finish-stat.hr-on b { color: var(--pink); }
+.hr-icon { display: inline-flex; vertical-align: -1px; }
+.hr-icon svg { width: 10px; height: 10px; color: var(--pink); }
 .watch-bpm { font-size: 56px; font-weight: 700; letter-spacing: -2px; color: var(--text-3); display: inline-flex; align-items: baseline; gap: 6px; }
 .watch-bpm.live { color: var(--pink); animation: hrbeat 1s ease-in-out infinite; }
 .watch-bpm small { font-size: 14px; font-weight: 600; color: var(--text-2); }

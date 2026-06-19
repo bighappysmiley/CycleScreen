@@ -35,7 +35,7 @@ const Fitness = (() => {
           <div class="finish-stat"><b>${r.distance.toFixed(2)}</b><small>${r.unit}</small></div>
           <div class="finish-stat"><b>${r.avg.toFixed(1)}</b><small>avg ${r.speedUnit}</small></div>
           <div class="finish-stat"><b>${Math.round(Device.state.speedKmh * (r.speedUnit === 'mph' ? 0.621371 : 1))}</b><small>${r.speedUnit}</small></div>
-          <div class="finish-stat"><b>${r.bpm || '--'}</b><small>bpm${Device.state.hrConnected ? ' ♥' : ''}</small></div>
+          <div class="finish-stat ${Device.state.hrConnected ? 'hr-on' : ''}"><b>${r.bpm || '--'}</b><small>${Device.state.hrConnected ? '<span class="hr-icon">' + Icons.heart + '</span> ' : ''}bpm</small></div>
         </div>
         <button class="btn btn--block btn--pill ${r.active ? 'btn--danger' : ''}" id="ride-toggle" style="${r.active ? '' : 'background:var(--accent-2)'}">${r.active ? 'End Ride' : 'Start Ride'}</button>
         ${!Device.state.hrConnected ? `<p style="text-align:center;color:var(--text-2);font-size:12px;margin-top:10px">Connect a heart-rate monitor in the <b>Watch</b> tab for real BPM.</p>` : ''}`;
@@ -50,6 +50,7 @@ const Fitness = (() => {
     const s = Device.state;
     body.innerHTML = `
       <div class="watch-hero">
+        <div class="watch-heart ${s.hrConnected ? 'live' : ''}">${Icons.heart}</div>
         <div class="watch-bpm ${s.hrConnected ? 'live' : ''}"><span id="w-bpm">${s.hrConnected ? (s.bpm || '–') : '–'}</span><small>BPM</small></div>
         <div class="watch-status" id="w-status">${s.hrConnected ? 'Connected · ' + (s.hrDevice || 'Heart Rate') : 'No monitor connected'}</div>
       </div>

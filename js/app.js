@@ -287,6 +287,7 @@ const App = (() => {
     setTheme(Store.get('theme'));
     setAccent(Store.get('accent'));
     I18n.set(Store.get('language') || 'en');
+    OSK.init(); // on-screen keyboard for the touchscreen (no physical keyboard)
     init();
     Security.init();
     Cloud.init();

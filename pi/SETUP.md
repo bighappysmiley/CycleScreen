@@ -83,8 +83,20 @@ sudo reboot
 ```
 After reboot the Pi launches CycleScreen full-screen.
 
+## Updating to the latest version (one command)
+On the Pi 3A+, pull the newest code and re-apply everything in one shot:
+```bash
+bash ~/CycleScreen/pi/update.sh
+```
+It pulls the latest commit, regenerates the kiosk launcher (persistent login so
+you only sign in once, no "didn't shut down correctly" prompt, the on-screen
+keyboard, and the GPS fixes), clears the Chromium cache, and reboots.
+
 ## 6. First run in the app
-1. **Sign in once** (create your account) — it stays signed in after that.
+1. **Sign in once** (create your account) — it stays signed in after that. An
+   **on-screen keyboard** pops up automatically for the username, password, and
+   place-search fields (the field is mirrored large at the top of the screen
+   while you type), so you never need a USB keyboard.
 2. Settings → **Profile**: add a photo (crop it), set your name.
 3. Settings → **Quick Dial**: add up to 3 contacts.
 4. Optional: set a **Lock Passcode** and turn on **Anti-Theft Alarm** (only active while you lock the screen).

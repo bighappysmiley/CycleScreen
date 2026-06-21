@@ -66,9 +66,18 @@ if [ -f "\$HOME/.config/cyclescreen/touch-matrix" ]; then
   DEV=\$(xinput list --name-only | grep -i touch | head -1)
   [ -n "\$DEV" ] && xinput set-prop "\$DEV" "Coordinate Transformation Matrix" \$M
 fi
+# Persistent Chromium profile so the login + language survive reboots, and clear
+# the crash flag so pulling power never shows a "Restore pages"/"didn't shut down
+# correctly" prompt on next boot.
+PROFILE="\$HOME/.config/cyclescreen-chrome"
+mkdir -p "\$PROFILE/Default"
+[ -f "\$PROFILE/Default/Preferences" ] && sed -i \\
+  's/"exit_type":"[^"]*"/"exit_type":"Normal"/; s/"exited_cleanly":false/"exited_cleanly":true/' \\
+  "\$PROFILE/Default/Preferences"
 unclutter -idle 0.5 -root &
-exec chromium-browser --kiosk --noerrdialogs --disable-infobars \\
+exec chromium-browser --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble \\
   --app=$KIOSK_URL \\
+  --user-data-dir="\$PROFILE" \\
   --autoplay-policy=no-user-gesture-required \\
   --unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:8780,http://127.0.0.1:8781 \\
   --allow-running-insecure-content \\

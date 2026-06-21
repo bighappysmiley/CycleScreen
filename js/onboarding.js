@@ -7,7 +7,9 @@ const Onboarding = (() => {
     root = document.createElement('div');
     root.className = 'onb';
     document.body.appendChild(root);
-    languageScreen();
+    // Ask the language once, ever. If it's already chosen, go straight to sign-in.
+    if (Store.get('language')) { I18n.set(picked); Cloud.enabled ? authScreen('signin') : loginScreen(); }
+    else languageScreen();
   }
 
   function finish() {

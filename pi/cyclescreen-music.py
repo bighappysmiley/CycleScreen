@@ -25,6 +25,34 @@ EXTS = (".mp3", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".wav", ".flac", ".webm
 MIME = {".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".aac": "audio/aac", ".ogg": "audio/ogg",
         ".oga": "audio/ogg", ".opus": "audio/ogg", ".wav": "audio/wav", ".flac": "audio/flac",
         ".webm": "audio/webm"}
+CALIB_FILE = os.path.expanduser("~/.config/cyclescreen/touch-matrix")
+
+
+def save_calibration(matrix):
+    """Persist the touch matrix; the kiosk X session applies it on start."""
+    os.makedirs(os.path.dirname(CALIB_FILE), exist_ok=True)
+    with open(CALIB_FILE, "w") as f:
+        f.write(" ".join(repr(x) for x in matrix) + "\n")
+
+
+def apply_calibration(matrix):
+    """Best-effort live apply via xinput (needs the running X session)."""
+    import subprocess
+    env = dict(os.environ); env.setdefault("DISPLAY", ":0")
+    if "XAUTHORITY" not in env:
+        for p in (os.path.expanduser("~/.Xauthority"), f"/run/user/{os.getuid()}/gdm/Xauthority"):
+            if os.path.exists(p):
+                env["XAUTHORITY"] = p; break
+    try:
+        names = subprocess.run(["xinput", "list", "--name-only"], capture_output=True, text=True, env=env, timeout=5).stdout
+        dev = next((n for n in names.splitlines() if "touch" in n.lower()), None)
+        if not dev:
+            return False
+        subprocess.run(["xinput", "set-prop", dev, "Coordinate Transformation Matrix", *[str(x) for x in matrix]],
+                       env=env, timeout=5, check=True)
+        return True
+    except Exception:
+        return False
 
 
 def list_tracks():
@@ -45,11 +73,29 @@ def safe_path(name):
 class Handler(BaseHTTPRequestHandler):
     def cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Range")
+        self.send_header("Access-Control-Allow-Headers", "Range, Content-Type")
         self.send_header("Access-Control-Expose-Headers", "Content-Range, Accept-Ranges, Content-Length")
 
     def do_OPTIONS(self):
         self.send_response(204); self.cors(); self.end_headers()
+
+    def do_POST(self):
+        if urllib.parse.urlparse(self.path).path != "/calibrate":
+            self.send_response(404); self.cors(); self.end_headers(); return
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            data = json.loads(self.rfile.read(n).decode() or "{}")
+            matrix = [float(x) for x in data.get("matrix", [])]
+            assert len(matrix) == 9
+        except Exception:
+            self.send_response(400); self.cors(); self.end_headers(); return
+        save_calibration(matrix)
+        ok = apply_calibration(matrix)
+        body = json.dumps({"ok": True, "applied": ok}).encode()
+        self.send_response(200); self.cors()
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body))); self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)

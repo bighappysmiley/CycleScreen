@@ -102,6 +102,14 @@ Quick-dial fires a `tel:` link. To make it ring through a paired phone, install 
 HFP handler and register it for `tel:` — e.g. `ofono` + `gnome-calls`, then
 `xdg-mime default <handler>.desktop x-scheme-handler/tel`.
 
+## Recalibrating the touchscreen
+If taps land slightly off, open **Settings → Admin → Recalibrate Screen** and tap
+the 5 targets. CycleScreen computes the X *Coordinate Transformation Matrix* and
+sends it to the music helper, which saves it to `~/.config/cyclescreen/touch-matrix`
+and applies it live; the kiosk also re-applies it on every boot. (If the helper
+isn't reachable, the dialog shows the one-line `xinput set-prop …` command to run
+over SSH.) Calibration is gated by your lock passcode if one is set.
+
 ## Troubleshooting
 - **GPS chip stuck on `…`:** dongle needs sky view; check `cgps -s`. Confirm
   `DEVICES` in `/etc/default/gpsd` matches your port, then `sudo systemctl restart gpsd cyclescreen-gps`.

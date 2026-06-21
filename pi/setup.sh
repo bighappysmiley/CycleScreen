@@ -14,7 +14,7 @@ echo "==> CycleScreen setup (user=$USER_NAME, repo=$REPO_DIR, url=$KIOSK_URL)"
 
 echo "==> 1/5 Installing packages…"
 sudo apt update
-sudo apt install -y chromium-browser python3 gpsd gpsd-clients bluez obexpushd unclutter
+sudo apt install -y chromium-browser python3 gpsd gpsd-clients bluez obexpushd unclutter xinput
 
 echo "==> 2/5 Configuring gpsd for the dongle ($GPS_DEVICE)…"
 sudo tee /etc/default/gpsd >/dev/null <<EOF
@@ -60,6 +60,12 @@ echo "==> 6/6 Kiosk autostart (X11/LXDE, memory-friendly for 512 MB)…"
 cat > "$HOME/cyclescreen-kiosk.sh" <<EOF
 #!/bin/bash
 xset s off; xset -dpms; xset s noblank
+# apply a saved touchscreen calibration (Settings -> Admin -> Recalibrate)
+if [ -f "\$HOME/.config/cyclescreen/touch-matrix" ]; then
+  M=\$(cat "\$HOME/.config/cyclescreen/touch-matrix")
+  DEV=\$(xinput list --name-only | grep -i touch | head -1)
+  [ -n "\$DEV" ] && xinput set-prop "\$DEV" "Coordinate Transformation Matrix" \$M
+fi
 unclutter -idle 0.5 -root &
 exec chromium-browser --kiosk --noerrdialogs --disable-infobars \\
   --app=$KIOSK_URL \\

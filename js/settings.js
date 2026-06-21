@@ -117,6 +117,12 @@ const Settings = (() => {
           <div class="lr-trail"><input class="field" id="sec-thresh" type="number" min="5" style="width:60px;margin:0;padding:7px;text-align:center" value="${sec.alarmThresholdM}"> m</div></div>
       </div>
 
+      <div class="list-section-title">Admin</div>
+      <div class="list">
+        <div class="list-row" id="calib-row"><div class="lr-icon" style="background:#5e5ce6">${Icons.gauge}</div>
+          <div class="lr-main"><div class="lr-title">Recalibrate Screen</div><div class="lr-sub">Fix touch accuracy</div></div><div class="lr-trail">›</div></div>
+      </div>
+
       <div class="list-section-title">About</div>
       <div class="list">
         <div class="list-row"><div class="lr-main"><div class="lr-title">CycleScreen</div><div class="lr-sub">Raspberry Pi • 7″ display • GLONASS GPS</div></div><div class="lr-trail">v1.0</div></div>
@@ -183,6 +189,28 @@ const Settings = (() => {
     gpsLabel();
     Device.on('gps', gpsLabel); Device.on('gpsstatus', gpsLabel);
     host.querySelector('#gps-row').onclick = () => locationSheet(() => render(host));
+
+    // Admin → recalibrate touchscreen (gated by the lock passcode if one is set)
+    host.querySelector('#calib-row').onclick = () => {
+      const run = () => Calibrate.start(async (matrix) => {
+        if (!matrix) return;
+        let applied = false;
+        try {
+          const r = await fetch((Store.get('musicServer.url') || 'http://127.0.0.1:8780').replace(/\/+$/, '') + '/calibrate',
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matrix }) });
+          applied = r.ok;
+        } catch {}
+        const cmd = `xinput set-prop "<your touchscreen>" "Coordinate Transformation Matrix" ${matrix.join(' ')}`;
+        App.sheet('Calibration saved', `
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 10px">${applied
+            ? 'Applied on the Pi and saved — it persists across reboots.'
+            : 'Saved on this device. The Pi helper wasn’t reachable, so apply it once over SSH:'}</p>
+          ${applied ? '' : `<pre style="background:var(--fill-2);border:1px solid var(--hairline);border-radius:10px;padding:10px;font-size:11px;overflow:auto;white-space:pre-wrap">${esc(cmd)}</pre>`}
+          <button class="btn btn--block" id="cal-ok">Done</button>`, (root, close) => { root.querySelector('#cal-ok').onclick = close; });
+      });
+      const pin = Store.get('security.lockPin') || Store.get('parental.pin');
+      if (pin) Security.verify(pin, 'Admin', run); else run();
+    };
 
     const signoutRow = host.querySelector('#signout-row');
     if (signoutRow) signoutRow.onclick = async () => { await Cloud.signOut(); Store.set('onboarded', false); location.reload(); };

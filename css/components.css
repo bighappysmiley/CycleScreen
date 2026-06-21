@@ -100,3 +100,12 @@
 .crop-ov input[type=range] { width: 100%; margin: 16px 0; accent-color: var(--accent); }
 .crop-actions { display: flex; gap: 10px; }
 .crop-actions .btn { flex: 1; }
+
+/* Touchscreen calibration */
+.calib-ov { position: fixed; inset: 0; z-index: 2300; background: var(--bg); touch-action: none; }
+.calib-info { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; font-size: 15px; color: var(--text-2); line-height: 1.5; }
+.calib-info b { font-size: 22px; color: var(--text); }
+.calib-target { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 2px solid var(--accent); display: grid; place-items: center; animation: calibpulse 1.2s ease-in-out infinite; }
+.calib-target i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+@keyframes calibpulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: .6; } }
+.calib-cancel { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); color: var(--text-2); font-size: 14px; padding: 10px 22px; background: var(--fill); border-radius: 999px; }

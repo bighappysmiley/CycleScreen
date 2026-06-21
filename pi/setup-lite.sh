@@ -19,7 +19,7 @@ echo "==> 1/7 Installing minimal X + Chromium + helpers…"
 sudo apt update
 sudo apt install -y --no-install-recommends \
   xserver-xorg xinit xserver-xorg-legacy x11-xserver-utils \
-  chromium-browser unclutter fonts-noto-color-emoji \
+  chromium-browser unclutter xinput fonts-noto-color-emoji \
   python3 gpsd gpsd-clients bluez obexpushd
 CHROME="$(command -v chromium-browser || command -v chromium || echo chromium-browser)"
 # allow startx from the console as a normal user
@@ -70,6 +70,12 @@ echo "==> 7/7 Kiosk X session (xinit, no desktop)…"
 cat > "$HOME/.xinitrc" <<EOF
 #!/bin/sh
 xset s off; xset -dpms; xset s noblank
+# apply a saved touchscreen calibration (from Settings -> Admin -> Recalibrate)
+if [ -f "\$HOME/.config/cyclescreen/touch-matrix" ]; then
+  M=\$(cat "\$HOME/.config/cyclescreen/touch-matrix")
+  DEV=\$(xinput list --name-only | grep -i touch | head -1)
+  [ -n "\$DEV" ] && xinput set-prop "\$DEV" "Coordinate Transformation Matrix" \$M
+fi
 unclutter -idle 0.5 -root &
 exec $CHROME --kiosk --noerrdialogs --disable-infobars \\
   --app=$KIOSK_URL \\

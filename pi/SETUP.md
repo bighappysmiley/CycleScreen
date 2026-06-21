@@ -4,10 +4,21 @@ End result: the Pi boots straight into CycleScreen full-screen, with the real
 GPS dongle, Bluetooth song transfer, and (optional) phone calling working.
 
 ## What you need
-- Raspberry Pi 4 (or 5), microSD card (16 GB+), power supply
+- Raspberry Pi (Pi 4/5 recommended; **Pi 3A+ works** — see notes below), microSD card (16 GB+), power supply
 - Official Raspberry Pi 7″ touchscreen (800×480)
 - GLONASS/GPS USB dongle, USB speaker, USB mic
 - A computer with **Raspberry Pi Imager** (raspberrypi.com/software)
+
+### Raspberry Pi 3A+ notes (important)
+- **One USB-A port only.** The GPS dongle + speaker + mic won't all fit — use a
+  **powered USB hub**.
+- **512 MB RAM.** A Chromium kiosk with a live map is heavy on a 3A+, and the
+  64-bit OS uses more RAM than 32-bit, so expect *modest* performance (slower map
+  panning, a few seconds to load). The installer bumps **swap to 1 GB** to keep
+  it from running out of memory, and starts Chromium with lighter flags.
+- If it feels too slow, options: flash **Raspberry Pi OS Lite (64-bit)** and boot
+  straight to the kiosk (no desktop) to free ~150 MB, or use a Pi 4. Ask and I'll
+  add a Lite/console kiosk path to the installer.
 
 ---
 

@@ -48,19 +48,36 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl enable --now obexpush || true
 
-echo "==> 5/5 Kiosk autostart…"
-AUTOSTART="$HOME/.config/lxsession/LXDE-pi"
-mkdir -p "$AUTOSTART"
-cat > "$AUTOSTART/autostart" <<EOF
-@xset s off
-@xset -dpms
-@xset s noblank
-@unclutter -idle 0.5 -root
-@chromium-browser --kiosk --noerrdialogs --disable-infobars --incognito=false \
-  --app=$KIOSK_URL \
-  --autoplay-policy=no-user-gesture-required \
-  --unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:8780,http://127.0.0.1:8781 \
-  --allow-running-insecure-content
+echo "==> 5/6 More swap (the Pi 3A+ has only 512 MB RAM)…"
+if [ -f /etc/dphys-swapfile ]; then
+  sudo sed -i 's/^#\?CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
+  sudo sed -i 's/^#\?CONF_MAXSWAP=.*/CONF_MAXSWAP=2048/' /etc/dphys-swapfile
+  sudo systemctl restart dphys-swapfile || true
+fi
+
+echo "==> 6/6 Kiosk autostart (X11/LXDE, memory-friendly for 512 MB)…"
+# A launch script + a desktop autostart entry (portable across LXDE sessions).
+cat > "$HOME/cyclescreen-kiosk.sh" <<EOF
+#!/bin/bash
+xset s off; xset -dpms; xset s noblank
+unclutter -idle 0.5 -root &
+exec chromium-browser --kiosk --noerrdialogs --disable-infobars \\
+  --app=$KIOSK_URL \\
+  --autoplay-policy=no-user-gesture-required \\
+  --unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:8780,http://127.0.0.1:8781 \\
+  --allow-running-insecure-content \\
+  --process-per-site --disable-features=TranslateUI \\
+  --disk-cache-dir=/tmp/cs-cache --disk-cache-size=15000000
+EOF
+chmod +x "$HOME/cyclescreen-kiosk.sh"
+
+mkdir -p "$HOME/.config/autostart"
+cat > "$HOME/.config/autostart/cyclescreen.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=CycleScreen Kiosk
+Exec=$HOME/cyclescreen-kiosk.sh
+X-GNOME-Autostart-enabled=true
 EOF
 
 echo ""

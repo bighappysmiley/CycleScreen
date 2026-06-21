@@ -25,18 +25,56 @@ const Device = (() => {
   };
 
   /* ---------------- GPS (real device geolocation only — no simulation) ---------------- */
-  let fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false;
+  let fallbackTimer = null, lastReal = 0, watchId = null, triedLowAccuracy = false, gpsBridgeTimer = null;
+
+  const gpsBridgeBase = () => (typeof Store !== 'undefined' && Store.get('gpsBridge.url') || 'http://127.0.0.1:8781').replace(/\/+$/, '');
 
   function startGPS() {
     const man = (typeof Store !== 'undefined') && Store.get('manualLocation');
     if (man) { applyManual(man, false); return; }
-    if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); return; }
-    if (!window.isSecureContext) { emit('gpsstatus', { state: 'insecure' }); App.toast && App.toast('⚠️ Location needs HTTPS'); }
-    requestLocation();
+    // Prefer the Pi GPS-dongle bridge if it's running; else browser geolocation.
+    tryGpsBridge().then((ok) => {
+      if (ok) return;
+      if (!navigator.geolocation) { emit('gpsstatus', { state: 'unsupported' }); return; }
+      if (!window.isSecureContext) { emit('gpsstatus', { state: 'insecure' }); App.toast && App.toast('⚠️ Location needs HTTPS'); }
+      requestLocation();
+    });
+  }
+
+  async function tryGpsBridge() {
+    try {
+      const r = await fetch(gpsBridgeBase() + '/position', { cache: 'no-store' });
+      if (!r.ok) return false;
+      await r.json(); // reachable (even if no fix yet) → use the dongle
+      clearInterval(gpsBridgeTimer);
+      gpsBridgeTimer = setInterval(pollGpsBridge, 1000);
+      pollGpsBridge();
+      return true;
+    } catch { return false; }
+  }
+
+  async function pollGpsBridge() {
+    if (state.manual) return;
+    try {
+      const r = await fetch(gpsBridgeBase() + '/position', { cache: 'no-store' });
+      const p = await r.json();
+      if (p.lat == null) { emit('gpsstatus', { state: 'locating' }); return; }
+      const firstFix = !state.hasFix;
+      state.coords = { lat: p.lat, lng: p.lng };
+      if (p.speed != null) state.speedKmh = Math.max(0, p.speed * 3.6);
+      if (p.heading != null) state.heading = p.heading;
+      state.accuracy = p.accuracy || null;
+      state.satellites = p.sats != null ? p.sats : state.satellites;
+      state.hasFix = true;
+      emit('gps', { ...state });
+      emit('gpsstatus', { state: 'live', accuracy: p.accuracy });
+      if (firstFix) fetchWeather();
+    } catch { /* bridge dropped; keep last position */ }
   }
 
   function stopWatch() {
     clearTimeout(fallbackTimer);
+    clearInterval(gpsBridgeTimer); gpsBridgeTimer = null;
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null;
   }
@@ -109,7 +147,7 @@ const Device = (() => {
   // Called from the UI to (re)prompt for location, e.g. after enabling permission.
   function retryLocation() {
     if (state.manual) return clearManualLocation();
-    triedLowAccuracy = false; clearTimeout(fallbackTimer); requestLocation();
+    triedLowAccuracy = false; stopWatch(); startGPS(); // re-check the dongle bridge, then browser
   }
 
   /* ---------------- Heart-rate monitor (BLE) ---------------- */

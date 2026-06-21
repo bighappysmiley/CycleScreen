@@ -51,7 +51,20 @@ git clone https://github.com/bighappysmiley/cyclescreen.git ~/CycleScreen
 # if your dongle isn't /dev/ttyACM0, pass it:
 GPS_DEVICE=/dev/ttyACM0 bash ~/CycleScreen/pi/setup.sh
 ```
-This installs everything and sets up:
+
+### ⚡ Fastest on the Pi 3A+: the Lite installer (recommended)
+For maximum speed on 512 MB, flash **Raspberry Pi OS Lite (64-bit)** (no desktop)
+instead, and run the Lite installer. It boots straight to console, auto-logs in,
+and starts a minimal X session running **only Chromium** — no desktop, panel, or
+window manager — which frees the most RAM:
+```bash
+git clone https://github.com/bighappysmiley/cyclescreen.git ~/CycleScreen
+GPS_DEVICE=/dev/ttyACM0 bash ~/CycleScreen/pi/setup-lite.sh
+```
+Both installers set up the same services below; only the kiosk launch differs
+(desktop autostart vs. bare xinit). Use **setup-lite.sh** on the 3A+.
+
+Either installer sets up:
 - **gpsd** reading the dongle
 - **cyclescreen-gps** — feeds the dongle position to the app (Chromium can't read gpsd directly)
 - **cyclescreen-music** — serves your music folder

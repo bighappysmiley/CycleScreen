@@ -71,6 +71,9 @@ const Settings = (() => {
           <div class="lr-trail" id="bt-act">Connect</div></div>
         <div class="list-row" id="dial-edit"><div class="lr-icon" style="background:#30d158">${Icons.phone}</div>
           <div class="lr-main"><div class="lr-title">Quick Dial Contacts</div></div><div class="lr-trail">Edit ›</div></div>
+        <div class="list-row" id="music-server-row"><div class="lr-icon" style="background:#34c759">${Icons.download}</div>
+          <div class="lr-main"><div class="lr-title">Local Music Folder</div><div class="lr-sub" id="music-server-sub">Bluetooth music helper (Pi)</div></div>
+          <div class="lr-trail">Edit ›</div></div>
       </div>
 
       <div class="list-section-title">Parental Controls</div>
@@ -185,6 +188,21 @@ const Settings = (() => {
     if (signoutRow) signoutRow.onclick = async () => { await Cloud.signOut(); Store.set('onboarded', false); location.reload(); };
 
     host.querySelector('#dial-edit').onclick = () => dialSheet(() => render(host));
+
+    // Pi local-music helper status + URL
+    (async () => {
+      const sub = host.querySelector('#music-server-sub'); if (!sub) return;
+      let ok = false; try { const r = await fetch((Store.get('musicServer.url') || '').replace(/\/+$/, '') + '/tracks', { cache: 'no-store' }); ok = r.ok; } catch {}
+      sub.textContent = (ok ? '✅ Connected · ' : '⚠️ Offline · ') + (Store.get('musicServer.url') || '');
+    })();
+    host.querySelector('#music-server-row').onclick = () => {
+      App.sheet('Local Music Folder', `
+        <input class="field" id="msrv-url" value="${esc(Store.get('musicServer.url') || '')}" placeholder="http://127.0.0.1:8780">
+        <p style="font-size:12px;color:var(--text-2);margin:2px 4px 12px">Address of the Pi music helper (pi/cyclescreen-music.py) that serves your Bluetooth-received songs. Songs there appear automatically in Music → Local.</p>
+        <button class="btn btn--block" id="msrv-save">Save</button>`, (root, close) => {
+        root.querySelector('#msrv-save').onclick = () => { Store.set('musicServer.url', root.querySelector('#msrv-url').value.trim() || 'http://127.0.0.1:8780'); close(); render(host); };
+      });
+    };
 
 
     host.querySelector('#lang-row').onclick = () => {

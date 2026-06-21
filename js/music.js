@@ -22,6 +22,13 @@ const Music = (() => {
   async function libPut(t) { const d = await db(); return new Promise((res) => { const tx = d.transaction(STORE, 'readwrite'); tx.objectStore(STORE).put(t); tx.oncomplete = res; }); }
   async function libDel(id) { const d = await db(); return new Promise((res) => { const tx = d.transaction(STORE, 'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete = res; }); }
 
+  // Optional Pi helper that serves a Bluetooth-received music folder (pi/cyclescreen-music.py).
+  const serverBase = () => (Store.get('musicServer.url') || 'http://127.0.0.1:8780').replace(/\/+$/, '');
+  async function serverTracks() {
+    try { const r = await fetch(serverBase() + '/tracks', { cache: 'no-store' }); if (!r.ok) throw 0; return (await r.json()).map((t) => ({ id: t.id, name: t.name, source: 'pi' })); }
+    catch { return []; }
+  }
+
   const audio = new Audio();
   let library = [], idx = -1, playing = false, curUrl = null;
   const niceName = (n) => n.replace(/\.[a-z0-9]+$/i, '');
@@ -33,11 +40,16 @@ const Music = (() => {
   async function playIndex(i) {
     if (i < 0 || i >= library.length) return;
     idx = i;
-    const rec = await libGet(library[i].id);
-    if (!rec) return;
-    if (curUrl) URL.revokeObjectURL(curUrl);
-    curUrl = URL.createObjectURL(rec.blob);
-    audio.src = curUrl;
+    const meta = library[i];
+    if (curUrl) { URL.revokeObjectURL(curUrl); curUrl = null; }
+    let src;
+    if (meta.source === 'pi') {
+      src = serverBase() + '/file?name=' + encodeURIComponent(meta.id);
+    } else {
+      const rec = await libGet(meta.id); if (!rec) return;
+      curUrl = URL.createObjectURL(rec.blob); src = curUrl;
+    }
+    audio.src = src;
     audio.play().catch(() => App.toast('Tap play to start audio'));
     renderLocal();
   }
@@ -74,7 +86,8 @@ const Music = (() => {
   }
 
   async function renderLocal() {
-    library = await libList();
+    const [pi, idb] = await Promise.all([serverTracks(), libList()]);
+    library = [...pi, ...idb.map((t) => ({ ...t, source: 'idb' }))];
     const cur = idx >= 0 && library[idx];
     mount.innerHTML = `
       <div class="local-np">
@@ -98,10 +111,10 @@ const Music = (() => {
         ${library.length ? `<div class="list">${library.map((t, i) => `
           <div class="list-row track-row ${i === idx ? 'playing' : ''}" data-i="${i}">
             <div class="lr-icon" style="background:${i === idx && playing ? 'var(--accent-2)' : 'var(--fill)'};color:${i === idx && playing ? '#fff' : 'var(--text-2)'}">${Icons.note}</div>
-            <div class="lr-main"><div class="lr-title">${esc(niceName(t.name))}</div></div>
-            <button class="track-del" data-del="${t.id}" aria-label="Remove">${Icons.trash}</button>
+            <div class="lr-main"><div class="lr-title">${esc(niceName(t.name))}</div>${t.source === 'pi' ? '<div class="lr-sub">From Bluetooth folder</div>' : ''}</div>
+            ${t.source === 'idb' ? `<button class="track-del" data-del="${t.id}" aria-label="Remove">${Icons.trash}</button>` : ''}
           </div>`).join('')}</div>`
-          : `<div class="empty">No local music yet.<br>Transfer songs to the device over Bluetooth, then tap <b>Add music</b>.</div>`}
+          : `<div class="empty">No local music yet.<br>Transfer songs to the device over Bluetooth (auto-detected), or tap <b>Add music</b> to import files.</div>`}
       </div>`;
 
     paintLocal();

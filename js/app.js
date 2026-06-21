@@ -69,11 +69,14 @@ const App = (() => {
     const tick = () => { el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
     tick(); setInterval(tick, 15000);
   }
-  function paintBattery(level) {
+  function paintBattery(level, charging) {
+    const chip = document.getElementById('status-battery');
+    if (level == null) { if (chip) chip.style.display = 'none'; return; } // no real battery → hide
+    if (chip) chip.style.display = '';
     document.getElementById('batt-pct').textContent = Math.round(level * 100) + '%';
     const f = document.getElementById('batt-fill');
     f.style.width = Math.round(level * 100) + '%';
-    f.style.background = level < 0.2 ? 'var(--danger)' : level < 0.4 ? 'var(--warn)' : 'var(--accent-2)';
+    f.style.background = charging ? 'var(--accent-2)' : level < 0.2 ? 'var(--danger)' : level < 0.4 ? 'var(--warn)' : 'var(--accent-2)';
   }
   function paintGPS(s) { document.getElementById('gps-sats').textContent = s.manual ? 'SET' : s.hasFix ? s.satellites : '…'; }
 

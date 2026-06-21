@@ -18,7 +18,7 @@ themes, and PIN-protected parental controls.
 - **Bottom tab bar** — Home · Apps · Theme · Settings · Lock.
 - **Left rail** — your name + presence, large **speed** readout, **weather** (live, from your GPS location), and **quick-dial contacts** (tap to call over your phone's Bluetooth, **hold to edit**).
 - **App drawer** — springboard-style grid: Music, Friends, Settings, Map, Weather, Fitness.
-- **Music** — plays **Spotify** and **Apple Music** through their official embed players (full tracks for signed-in subscribers, previews otherwise). The default playlist/album is configurable in `js/firebase-config.js → window.CYCLESCREEN_MUSIC`.
+- **Music** — service tabs for **24Six / Apple Music / Spotify** (Coming Soon) and a working **Local** player: import your own audio files (kept in IndexedDB so they persist), or auto-list songs transferred to the Pi over Bluetooth via the [`pi/cyclescreen-music.py`](pi/cyclescreen-music.py) helper.
 - **Quick-dial calling** — each contact dials via the platform's `tel:` handler (connected phone / cellular / VoIP softphone).
 - **Friends** — add friends to your group, send **voice messages** and **emoji** reactions, and create **GPS challenges** (races / distance / climbs) with a live leaderboard.
 - **Settings** — light/dark theme, accent color, profile, units (km/h ↔ mph), Bluetooth pairing, quick-dial editor.
@@ -115,7 +115,7 @@ js/
   device.js       # hardware abstraction (GPS / Bluetooth / weather / battery) + simulation
   state.js        # persistent store (localStorage)
   map.js          # dashboard map (Leaflet/OSM, Google Maps optional)
-  music.js        # Spotify / Apple Music embeds
+  music.js        # music app (service tabs + Local player)
   friends.js      # friends, voice notes, emoji, GPS challenges
   settings.js     # appearance, profile, quick-dial, parental controls
   dashboard.js    # left rail (profile / speed / weather / quick-dial)

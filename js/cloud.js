@@ -82,10 +82,15 @@ const Cloud = (() => {
     return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).filter((u) => u.uid !== me.uid);
   }
 
-  // Set the signed-in user's profile photo (Cloudinary URL).
+  // Set the signed-in user's profile photo (Cloudinary URL) and sync it to the
+  // user's member entry in every group they belong to, so everyone sees it.
   async function setPhoto(url) {
     await db.collection("users").doc(me.uid).update({ photo: url });
     if (me) me.photo = url;
+    try {
+      const snap = await db.collection("groups").where("memberUids", "array-contains", me.uid).get();
+      await Promise.all(snap.docs.map((g) => g.ref.collection("members").doc(me.uid).set({ photo: url }, { merge: true })));
+    } catch (e) { /* group photo sync is best-effort */ }
   }
 
   /* ---- groups (realtime) ---- */

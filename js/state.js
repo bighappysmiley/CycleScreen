@@ -17,6 +17,7 @@ const Store = (() => {
     },
     security: { lockPin: '', locked: false, alarmArmed: false, alarmThresholdM: 20 },
     music: { volume: 0.7, shuffle: false, repeat: false, service: 'local' },
+    musicServer: { url: 'http://127.0.0.1:8780' }, // Pi local-music helper
     lastRide: null, // { date, distanceKm, durationSec, avgKmh }
     rides: [],      // ride history (newest first)
     manualLocation: null, // { lat, lng, label } — overrides GPS when set

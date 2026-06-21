@@ -22,13 +22,22 @@ const Dashboard = (() => {
 
   function applyLabels() {
     const map = {
-      'rail-presence-txt': 'online', 'lbl-speed': 'speed', 'lbl-quickdial': 'quick_dial',
+      'lbl-speed': 'speed', 'lbl-quickdial': 'quick_dial',
       'lbl-holdedit': 'hold_to_edit', 'lbl-ride': 'current_ride',
       'tab-home': 'home', 'tab-apps': 'apps', 'tab-theme': 'theme', 'tab-settings': 'settings', 'tab-lock': 'lock',
     };
     for (const [id, key] of Object.entries(map)) { const el = document.getElementById(id); if (el) el.textContent = I18n.t(key); }
     document.getElementById('ov-search-input').placeholder = I18n.t('search_places');
     if (!ride.active) document.getElementById('ride-btn').textContent = I18n.t('start_ride');
+    paintPresence();
+  }
+
+  function paintPresence() {
+    const online = navigator.onLine;
+    const txt = document.getElementById('rail-presence-txt');
+    if (txt) txt.textContent = online ? I18n.t('online') : 'Offline';
+    const dot = document.querySelector('.rail-presence .dot');
+    if (dot) dot.style.background = online ? 'var(--accent-2)' : 'var(--text-3)';
   }
 
   /* ---- Quick dial: rows with call button + hold-to-edit ---- */
@@ -93,7 +102,7 @@ const Dashboard = (() => {
   function paintWeather(w) {
     document.getElementById('rail-weather-icon').textContent = w.glyph;
     const imperial = Store.get('profile.units') === 'imperial';
-    const temp = imperial ? Math.round(w.temp * 9 / 5 + 32) : w.temp;
+    const temp = w.temp == null ? '--' : (imperial ? Math.round(w.temp * 9 / 5 + 32) : w.temp);
     document.getElementById('rail-weather-temp').textContent = temp + '°';
     document.getElementById('rail-weather-desc').textContent = w.desc;
   }
@@ -171,6 +180,8 @@ const Dashboard = (() => {
     refresh();
     paintClock(); setInterval(paintClock, 15000);
     wireSearch();
+    window.addEventListener('online', paintPresence);
+    window.addEventListener('offline', paintPresence);
     Device.on('gps', (s) => { paintSpeed(s.speedKmh); onRideFix(s); });
     Device.on('weather', paintWeather);
     Device.on('hr', (bpm) => { if (bpm && !ride.active) { const el = document.getElementById('ride-bpm'); if (el) el.textContent = bpm; } });

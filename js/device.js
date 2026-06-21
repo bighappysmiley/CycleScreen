@@ -1,11 +1,10 @@
-/* device.js — hardware abstraction layer.
+/* device.js — hardware abstraction layer (real signals only).
  *
- * On the Raspberry Pi this talks to the real GLONASS GPS dongle (via the
- * browser's Geolocation API, fed by gpsd→geoclue), Web Bluetooth (paired
- * phone for quick-dial / hands-free), Web Audio (USB speaker + mic), and a
- * weather API. When that hardware isn't present (e.g. a laptop browser) it
- * transparently falls back to a realistic simulation so the whole UI is
- * fully demoable. Everything funnels through one event bus.
+ * Talks to real device capabilities: Geolocation (GLONASS dongle via
+ * gpsd→geoclue on the Pi, or the browser's location service), Web Bluetooth
+ * (paired phone for quick-dial), Web Audio (USB speaker), the battery API, and
+ * a live weather API. Nothing is simulated — when a capability is unavailable
+ * the UI reflects that (e.g. the battery indicator is hidden). One event bus.
  */
 const Device = (() => {
   const listeners = {};
@@ -149,22 +148,18 @@ const Device = (() => {
 
   /* ---------------- Bluetooth (phone) ---------------- */
   async function connectBluetooth() {
-    if (navigator.bluetooth) {
-      try {
-        const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
-        state.btConnected = true; state.btDevice = dev.name || 'Phone';
-        emit('bt', { ...state });
-        return true;
-      } catch (e) { /* user cancelled — fall through to sim */ }
-    }
-    // simulate a pairing
-    state.btConnected = true; state.btDevice = "iPhone";
-    emit('bt', { ...state });
-    return true;
+    if (!navigator.bluetooth) { App.toast && App.toast('Bluetooth not supported in this browser'); return false; }
+    try {
+      const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+      state.btConnected = true; state.btDevice = dev.name || 'Phone';
+      dev.addEventListener && dev.addEventListener('gattserverdisconnected', () => { state.btConnected = false; state.btDevice = null; emit('bt', { ...state }); });
+      emit('bt', { ...state });
+      return true;
+    } catch (e) { return false; } // user cancelled / no device — do NOT fake a connection
   }
   function disconnectBluetooth() { state.btConnected = false; state.btDevice = null; emit('bt', { ...state }); }
 
-  // Place a call over the phone's Bluetooth HFP (simulated UI here).
+  // Quick-dial: the UI fires a tel: link which routes through the paired phone.
   function dial(contact) {
     emit('call', contact);
     return state.btConnected;
@@ -180,7 +175,7 @@ const Device = (() => {
       const j = await r.json();
       state.weather = mapWeather(j.current);
     } catch (e) {
-      state.weather = { temp: 24, code: 0, wind: 8, ...glyphFor(0) };
+      state.weather = { temp: null, code: null, wind: 0, glyph: '–', desc: 'Weather unavailable' };
     }
     emit('weather', state.weather);
   }
@@ -199,19 +194,14 @@ const Device = (() => {
     return { glyph: '🌡️', desc: 'Weather' };
   }
 
-  /* ---------------- Battery ---------------- */
+  /* ---------------- Battery (real only; hidden when unavailable) ---------------- */
   async function startBattery() {
-    if (navigator.getBattery) {
-      try {
-        const b = await navigator.getBattery();
-        const upd = () => { state.battery = b.level; emit('battery', b.level); };
-        b.addEventListener('levelchange', upd); upd();
-        return;
-      } catch (e) {}
-    }
-    let lvl = 0.86;
-    emit('battery', lvl);
-    setInterval(() => { lvl = Math.max(0.05, lvl - 0.002); state.battery = lvl; emit('battery', lvl); }, 30000);
+    if (!navigator.getBattery) { state.battery = null; emit('battery', null); return; }
+    try {
+      const b = await navigator.getBattery();
+      const upd = () => { state.battery = b.level; emit('battery', b.level, b.charging); };
+      b.addEventListener('levelchange', upd); b.addEventListener('chargingchange', upd); upd();
+    } catch (e) { state.battery = null; emit('battery', null); }
   }
 
   function init() {

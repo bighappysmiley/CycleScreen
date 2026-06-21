@@ -1,10 +1,10 @@
 # 🚴 CycleScreen
 
 A beautiful, Apple-style bike computer for a **Raspberry Pi + 7″ touchscreen**.
-The dashboard is a full live map, with your profile, speed, weather, and four
-quick-dial contacts on the side. It ships with an app drawer, a 24six-style
-music player, a Friends app (voice notes, emoji, GPS challenges), light/dark
-themes, and PIN-protected parental controls.
+The dashboard is a full live map, with your profile, speed, weather, and three
+quick-dial contacts on the side. It ships with an app drawer, a music player
+(Local + streaming soon), a Friends app (voice notes, emoji, GPS challenges),
+light/dark themes, and PIN-protected parental controls.
 
 > Built as a self-contained web app — it runs in any modern browser today and
 > in Chromium kiosk mode on the Pi. No build step, no dependencies to install.
@@ -41,17 +41,20 @@ window to 800×480 (or use device emulation).
 
 ## Hardware integration
 
-Everything funnels through `js/device.js`, a hardware abstraction layer. With
-no hardware attached it runs a **realistic simulation** (a moving GPS track,
-live speed, weather). On the Pi it automatically uses real signals:
+Everything funnels through `js/device.js`, a hardware abstraction layer that
+uses **real signals only** — nothing is simulated. When a capability isn't
+available, the UI reflects that (e.g. the battery indicator hides, weather shows
+"unavailable") rather than showing fake data.
 
-| Capability        | Real source on the Pi                                   | Fallback         |
-|-------------------|---------------------------------------------------------|------------------|
-| GPS (GLONASS)     | `navigator.geolocation` (via `gpsd` → `geoclue`)        | Simulated track  |
-| Speed / heading   | GPS-derived                                             | Simulated        |
-| Phone / quick dial| `tel:` handoff to a Bluetooth-paired phone (HFP)        | Opens dialer if present |
-| Weather           | Open-Meteo API at your live coordinates                 | Sensible default |
-| Battery           | `navigator.getBattery()`                                | Simulated drain  |
+| Capability        | Source                                                   | If unavailable |
+|-------------------|----------------------------------------------------------|----------------|
+| GPS (GLONASS)     | `navigator.geolocation` (via `gpsd` → `geoclue` on the Pi) | Manual pin (Settings → Location, or long-press the map) |
+| Speed / heading   | GPS-derived (or device-reported)                         | 0 until a fix  |
+| Phone / quick dial| `tel:` handoff to a Bluetooth-paired phone (HFP)         | No-op without a handler |
+| Heart rate        | Web Bluetooth standard Heart-Rate profile (strap/watch)  | `--`           |
+| Weather           | Open-Meteo API at your live coordinates                  | "unavailable"  |
+| Battery           | `navigator.getBattery()`                                 | Indicator hidden |
+| Local music       | files in IndexedDB + the Pi music helper                 | Add via picker |
 
 ### Bluetooth phone calling (quick dial)
 
@@ -66,19 +69,21 @@ off; it can't drive the call itself. Typical setup:
 3. Register that app as the `tel:` URL handler (e.g. via `xdg-mime default`),
    so tapping a contact in CycleScreen dials on the paired phone.
 
-### Music (Spotify / Apple Music)
+### Music (Local + Bluetooth)
 
-The Music app uses the official **Spotify** (`open.spotify.com/embed`) and
-**Apple Music** (`embed.music.apple.com`) embed players, which are designed to
-be framed — full tracks play for signed-in subscribers, previews otherwise. Set
-the default content in `js/firebase-config.js`:
+The Music app has service tabs for **24Six / Apple Music / Spotify** (Coming
+Soon) and a working **Local** player. Local plays your own audio files:
 
-```js
-window.CYCLESCREEN_MUSIC = {
-  spotify: "playlist/<id>",          // path after open.spotify.com/embed/
-  apple:   "us/playlist/<slug>/<pl.id>", // path after embed.music.apple.com/
-};
-```
+- **Import** any audio files with **Add music** — they're stored in IndexedDB
+  and persist across reloads.
+- **Bluetooth, hands-free:** run the helper [`pi/cyclescreen-music.py`](pi/cyclescreen-music.py)
+  on the Pi. Set up an OBEX receiver (`obexpushd -B -o ~/Music -n`) so songs
+  sent from your phone land in `~/Music`; the helper serves that folder and the
+  **Local** tab lists & streams them automatically. Set/check the helper URL in
+  **Settings → Connectivity → Local Music Folder**.
+
+Because it calls `http://127.0.0.1:8780`, add the localhost origin to the kiosk
+flags (see below).
 
 ### Google Maps
 
@@ -101,10 +106,19 @@ zero setup. To switch to **Google Maps**, set a key before the scripts load:
 ```bash
 chromium-browser --kiosk --noerrdialogs --disable-infobars \
   --app=http://localhost:8080 \
-  --autoplay-policy=no-user-gesture-required
+  --autoplay-policy=no-user-gesture-required \
+  --unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:8780 \
+  --allow-running-insecure-content
 ```
 
-5. (Optional) Add that command to an autostart entry so CycleScreen boots straight into the dashboard.
+5. (Optional) Run the local-music helper so Bluetooth-received songs appear in Music → Local:
+
+```bash
+sudo cp pi/cyclescreen-music.service /etc/systemd/system/
+sudo systemctl enable --now cyclescreen-music
+```
+
+6. (Optional) Add the Chromium command to an autostart entry so CycleScreen boots straight into the dashboard.
 
 ## Project layout
 
@@ -112,20 +126,16 @@ chromium-browser --kiosk --noerrdialogs --disable-infobars \
 index.html        # app shell + screen stack
 css/              # design tokens + per-area styles (variables, base, components, dashboard, apps)
 js/
-  device.js       # hardware abstraction (GPS / Bluetooth / weather / battery) + simulation
+  device.js       # hardware abstraction (GPS / Bluetooth / heart rate / weather / battery)
   state.js        # persistent store (localStorage)
+  cloud.js        # Firebase accounts + synced groups; cropper.js, icons.js, i18n.js
   map.js          # dashboard map (Leaflet/OSM, Google Maps optional)
-  music.js        # music app (service tabs + Local player)
-  friends.js      # friends, voice notes, emoji, GPS challenges
-  settings.js     # appearance, profile, quick-dial, parental controls
-  dashboard.js    # left rail (profile / speed / weather / quick-dial)
-  app.js          # navigation, app drawer, status bar, sheets, theme, PIN lock
+  music.js        # music app (service tabs + Local player, IndexedDB + Pi helper)
+  friends.js      # groups, members/roles, chat, voice notes, GPS challenges
+  fitness.js      # ride / watch (Bluetooth HR) / history
+  settings.js     # appearance, profile + photo cropper, parental controls, security
+  dashboard.js    # left rail (profile / speed / weather / quick-dial / ride)
+  security.js     # lock screen + GPS anti-theft alarm
+  app.js          # navigation, app drawer, status bar, sheets, theme
+pi/               # cyclescreen-music.py (+ service), FIREBASE.md
 ```
-
-## Notes & next steps
-
-This is a fully interactive **v1**. Things currently simulated that map to real
-hardware later: actual audio streaming from the 24six API, Web Bluetooth HFP
-call control, and real-time friend presence/challenge sync (would need a
-backend or peer connection). The yoga app you mentioned at the end got cut off —
-tell me what you'd like there and I'll add it.

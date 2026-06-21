@@ -7,7 +7,7 @@ set -e
 
 USER_NAME="$(whoami)"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-KIOSK_URL="${CYCLESCREEN_URL:-https://cyclescreen.netlify.app}"
+KIOSK_URL="${CYCLESCREEN_URL:-https://cyclescreenv2.netlify.app}"
 GPS_DEVICE="${GPS_DEVICE:-/dev/ttyACM0}"
 
 echo "==> CycleScreen setup (user=$USER_NAME, repo=$REPO_DIR, url=$KIOSK_URL)"

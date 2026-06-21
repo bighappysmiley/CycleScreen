@@ -105,7 +105,7 @@ saved on the chat message in Firestore so it plays back on every device.
 ## 4. Authorize your domain
 
 Authentication → Settings → **Authorized domains** → add your CycleScreen URL
-(e.g. `cyclescreen.netlify.app`).
+(e.g. `cyclescreenv2.netlify.app`).
 
 ## How it works in the app
 

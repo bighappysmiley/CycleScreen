@@ -12,5 +12,7 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # GPS, phone, mic for voice notes; autoplay for the Spotify/Apple embeds
+    # GPS, phone, mic for voice notes; autoplay for embedded players
     Permissions-Policy = "geolocation=(self), bluetooth=(self), microphone=(self), autoplay=*"
+    # Always revalidate so the kiosk picks up new deploys (304 when unchanged)
+    Cache-Control = "no-cache"

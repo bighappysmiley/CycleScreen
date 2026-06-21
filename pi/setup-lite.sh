@@ -8,7 +8,7 @@ set -e
 
 USER_NAME="$(whoami)"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-KIOSK_URL="${CYCLESCREEN_URL:-https://cyclescreen.netlify.app}"
+KIOSK_URL="${CYCLESCREEN_URL:-https://cyclescreenv2.netlify.app}"
 GPS_DEVICE="${GPS_DEVICE:-/dev/ttyACM0}"
 # Chromium binary differs across images (chromium-browser vs chromium)
 CHROME="$(command -v chromium-browser || command -v chromium || echo chromium-browser)"

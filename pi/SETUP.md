@@ -69,7 +69,7 @@ Either installer sets up:
 - **cyclescreen-gps** — feeds the dongle position to the app (Chromium can't read gpsd directly)
 - **cyclescreen-music** — serves your music folder
 - **obexpush** — receives songs sent over Bluetooth into `~/Music`
-- **Chromium kiosk** autostart pointing at `https://cyclescreen.netlify.app`
+- **Chromium kiosk** autostart pointing at `https://cyclescreenv2.netlify.app`
 
 > Using a different URL (e.g. your own deploy or a locally-served copy)?
 > Run it as `CYCLESCREEN_URL=https://your-url bash ~/CycleScreen/pi/setup.sh`.

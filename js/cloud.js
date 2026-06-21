@@ -20,6 +20,8 @@ const Cloud = (() => {
     try {
       firebase.initializeApp(cfg);
       auth = firebase.auth(); db = firebase.firestore();
+      // Keep the session on the device so you only sign in ONCE.
+      try { auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch (e) {}
       auth.onAuthStateChanged(async (u) => {
         if (u) {
           const doc = await db.collection("users").doc(u.uid).get();

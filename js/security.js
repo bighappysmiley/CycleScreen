@@ -59,10 +59,6 @@ const Security = (() => {
       onSuccess: () => { Store.set('security.locked', false); triggered = false; stopSiren(); },
     });
   }
-  // called on boot — only shows if it was locked when last used (not auto-lock)
-  function restoreLock() {
-    if (Store.get('security.locked') && Store.get('security.lockPin')) showLockScreen();
-  }
 
   /* ---------- anti-theft alarm (active only while the device is LOCKED) ---------- */
   let anchor = null, triggered = false, audioCtx = null, sirenTimer = null, sirenNodes = null, alarmOv = null, needsReanchor = false;
@@ -146,9 +142,10 @@ const Security = (() => {
 
   function init() {
     Device.on('gps', onGPS);
-    // if it was left armed, re-anchor once we have a real fix on boot
+    // Lock is a manual, per-session action — start every launch UNLOCKED so you
+    // aren't asked for the passcode on every boot.
+    Store.set('security.locked', false);
     if (Store.get('security.alarmArmed')) needsReanchor = true;
-    restoreLock();
   }
 
   // Verify an arbitrary PIN (e.g. parental). onSuccess runs on match; cancellable.

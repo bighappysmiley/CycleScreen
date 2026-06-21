@@ -119,7 +119,7 @@ const Dashboard = (() => {
     ride.active ? endRide() : startRide();
   }
   function startRide() {
-    ride.active = true; ride.startTs = Date.now(); ride.distanceKm = 0; ride.lastFix = { ...Device.state.coords }; ride.elapsed = 0; ride.bpm = 0;
+    ride.active = true; ride.startTs = Date.now(); ride.distanceKm = 0; ride.lastFix = Device.state.coords ? { ...Device.state.coords } : null; ride.elapsed = 0; ride.bpm = 0;
     document.getElementById('ride-card').classList.add('active');
     document.getElementById('ride-btn').textContent = I18n.t('end_ride');
     rideTimer = setInterval(tickRide, 1000);
@@ -143,7 +143,7 @@ const Dashboard = (() => {
     document.getElementById('ride-bpm').textContent = ride.bpm || '--';
   }
   function onRideFix(s) {
-    if (!ride.active) return;
+    if (!ride.active || !s.coords) return;
     if (ride.lastFix) ride.distanceKm += haversine(ride.lastFix, s.coords);
     ride.lastFix = { ...s.coords };
     const imperial = Store.get('profile.units') === 'imperial';

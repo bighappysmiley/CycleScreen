@@ -84,7 +84,7 @@ const Security = (() => {
 
   function onGPS(s) {
     // Only watch for movement while armed AND the screen is locked.
-    if (!Store.get('security.alarmArmed') || !Store.get('security.locked') || triggered) return;
+    if (!Store.get('security.alarmArmed') || !Store.get('security.locked') || triggered || !s.coords) return;
     if (needsReanchor) { anchor = { ...s.coords }; needsReanchor = false; return; }
     if (!anchor) { anchor = { ...s.coords }; return; }
     const moved = haversineM(anchor, s.coords);

@@ -16,10 +16,13 @@ const MapView = (() => {
     }).addTo(map);
 
     const c = Device.state.coords;
-    map.setView([c.lat, c.lng], 16);
+    // No fix yet → a neutral wide view (not a fake city) so it's obvious we're
+    // still acquiring GPS rather than claiming a location.
+    if (c) map.setView([c.lat, c.lng], 16);
+    else map.setView([20, 0], 2);
 
     const icon = L.divIcon({ className: 'rider-dot', html: '<div class="core rider-pulse"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
-    marker = L.marker([c.lat, c.lng], { icon }).addTo(map);
+    marker = L.marker(c ? [c.lat, c.lng] : [20, 0], { icon, opacity: c ? 1 : 0 }).addTo(map);
     trail = L.polyline([], { color: '#0a84ff', weight: 5, opacity: .8, lineCap: 'round' }).addTo(map);
 
     // dragging the map pauses auto-follow; a tap on the rider re-centers.
@@ -47,10 +50,10 @@ const MapView = (() => {
 
   let snappedReal = false;
   function onGPS(s) {
-    if (!ready) return;
+    if (!ready || !s.coords) return; // ignore until there's an actual fix
     const ll = [s.coords.lat, s.coords.lng];
-    marker.setLatLng(ll);
-    // first fix can be far from the default — snap there instead of a slow pan
+    marker.setLatLng(ll); marker.setOpacity(1);
+    // first real fix — snap straight there instead of a slow pan from the wide view
     if (!snappedReal) {
       snappedReal = true; trailCoords = [];
       map.setView(ll, 16); marker.setLatLng(ll); trail.setLatLngs([]); return;
@@ -61,7 +64,7 @@ const MapView = (() => {
     if (follow) map.panTo(ll, { animate: true, duration: 0.5 });
   }
 
-  function recenter() { if (ready) { follow = true; map.setView([Device.state.coords.lat, Device.state.coords.lng], 16, { animate: true }); } }
+  function recenter() { const c = Device.state.coords; if (ready && c) { follow = true; map.setView([c.lat, c.lng], 16, { animate: true }); } }
   function invalidate() { if (ready) setTimeout(() => map.invalidateSize(), 60); }
 
   let searchMarker = null;

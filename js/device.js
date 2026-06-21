@@ -12,7 +12,7 @@ const Device = (() => {
   const on = (ev, fn) => ((listeners[ev] = listeners[ev] || []).push(fn), fn);
 
   const state = {
-    coords: { lat: 32.0853, lng: 34.7818 }, // Tel Aviv default
+    coords: null, // no location until a real GPS fix (dongle/browser) or manual pin
     heading: 45,
     speedKmh: 0,
     satellites: 0,
@@ -205,6 +205,7 @@ const Device = (() => {
 
   /* ---------------- Weather ---------------- */
   async function fetchWeather() {
+    if (!state.coords) return; // no fix yet — nothing to look up
     try {
       const { lat, lng } = state.coords;
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&current=temperature_2m,weather_code,wind_speed_10m`;

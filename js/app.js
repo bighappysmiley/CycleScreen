@@ -177,6 +177,7 @@ const App = (() => {
       root.querySelector('#wx-expand').onclick = async (e) => {
         const box = root.querySelector('#wx-forecast');
         if (box.dataset.open) { box.innerHTML = ''; delete box.dataset.open; e.target.textContent = 'Show forecast'; return; }
+        if (!Device.state.coords) { e.target.textContent = 'Waiting for GPS fix…'; return; }
         e.target.textContent = 'Loading…';
         try {
           const { lat, lng } = Device.state.coords;

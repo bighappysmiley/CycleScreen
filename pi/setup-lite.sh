@@ -84,8 +84,19 @@ mkdir -p "\$PROFILE/Default"
 [ -f "\$PROFILE/Default/Preferences" ] && sed -i \\
   's/"exit_type":"[^"]*"/"exit_type":"Normal"/; s/"exited_cleanly":false/"exited_cleanly":true/' \\
   "\$PROFILE/Default/Preferences"
+# The Raspberry Pi chromium-browser wrapper pops a zenity dialog ("not
+# recommended to run Chromium on less than 1 GB of RAM — Launch Anyway?") before
+# Chromium starts. Launch the real ELF binary directly to skip the wrapper, and
+# auto-answer zenity if we still go through it.
+mkdir -p "\$HOME/.cs-bin"
+printf '#!/bin/sh\\nexit 0\\n' > "\$HOME/.cs-bin/zenity"; chmod +x "\$HOME/.cs-bin/zenity"
+export PATH="\$HOME/.cs-bin:\$PATH"
+BIN="$CHROME"
+for c in /usr/lib/chromium/chromium /usr/lib/chromium-browser/chromium-browser /usr/lib/chromium-browser/chromium-browser.bin; do
+  if [ -x "\$c" ] && head -c4 "\$c" 2>/dev/null | grep -q ELF; then BIN="\$c"; break; fi
+done
 unclutter -idle 0.5 -root &
-exec $CHROME --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble \\
+exec "\$BIN" --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble \\
   --test-type --no-first-run --no-default-browser-check --password-store=basic \\
   --app=$KIOSK_URL \\
   --user-data-dir="\$PROFILE" \\

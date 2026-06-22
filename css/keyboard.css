@@ -1,68 +1,65 @@
-/* keyboard.css — on-screen touch keyboard (kiosk). Docked bottom + field echo on top. */
+/* keyboard.css — on-screen touch keyboard (kiosk). One bottom-pinned block:
+ * a field-echo bar sits directly above the keys so you always see what you type
+ * even though the real field is behind the keyboard. Self-contained so the slide
+ * transform never fights a `position:fixed` child (containing-block bug). */
 .osk {
   position: fixed; left: 0; right: 0; bottom: 0;
   z-index: 100000;
-  box-sizing: border-box; max-height: 64vh; overflow: hidden;
+  box-sizing: border-box;
+  display: flex; flex-direction: column;
   transform: translateY(110%);
   transition: transform .22s cubic-bezier(.4, 0, .2, 1);
-  background: rgba(28, 28, 30, .96);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  padding: 5px 5px calc(5px + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, .45);
+  background: rgba(28, 28, 30, .97);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  padding: 0 5px calc(5px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, .5);
   user-select: none; -webkit-user-select: none;
 }
 .osk, .osk * { box-sizing: border-box; }
 .osk.show { transform: translateY(0); }
 
-/* the magnified field, pinned to the very top of the screen while typing */
+/* field echo — the row above the keys mirroring the focused field */
 .osk-bar {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 100001;
   display: flex; align-items: center; gap: 10px;
-  min-height: 52px; padding: 8px 16px;
-  background: rgba(20, 20, 22, .97);
-  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  min-height: 46px; padding: 6px 12px; margin: 0 -5px 4px;
+  background: rgba(20, 20, 22, .96);
   border-bottom: 1px solid rgba(255, 255, 255, .08);
-  transform: translateY(-110%); transition: transform .22s cubic-bezier(.4, 0, .2, 1);
   color: #fff;
 }
-.osk.show .osk-bar { transform: translateY(0); }
 .osk-bar-label { font-size: 13px; color: rgba(255, 255, 255, .5); flex: 0 0 auto; }
 .osk-bar-val {
-  flex: 1 1 auto; font-size: 22px; font-weight: 600; letter-spacing: .2px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 28px;
+  flex: 1 1 auto; font-size: 20px; font-weight: 600; letter-spacing: .2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 26px;
 }
-.osk-bar-val::after { content: ''; display: inline-block; width: 2px; height: 22px; margin-left: 1px;
-  background: var(--accent, #0a84ff); vertical-align: -4px; animation: osk-caret 1s steps(1) infinite; }
+.osk-bar-val::after { content: ''; display: inline-block; width: 2px; height: 20px; margin-left: 1px;
+  background: var(--accent, #0a84ff); vertical-align: -3px; animation: osk-caret 1s steps(1) infinite; }
 @keyframes osk-caret { 50% { opacity: 0; } }
-.osk-bar-eye { flex: 0 0 auto; background: rgba(255, 255, 255, .12); color: #fff; border: 0;
-  border-radius: 8px; padding: 6px 12px; font-size: 13px; }
+.osk-bar-eye, .osk-bar-hide { flex: 0 0 auto; background: rgba(255, 255, 255, .14); color: #fff; border: 0;
+  border-radius: 8px; padding: 6px 12px; font-size: 14px; }
 
 .osk-row { display: flex; gap: 5px; justify-content: center; margin: 4px 0; }
 .osk-key {
   flex: 1 1 0; min-width: 0; height: 46px;
   border: 0; border-radius: 8px;
-  background: rgba(255, 255, 255, .14); color: #fff;
+  background: rgba(255, 255, 255, .15); color: #fff;
   font-size: 20px; font-weight: 500;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 1px 0 rgba(0, 0, 0, .35);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
-/* keep the whole keyboard on-screen on the short 7" panel (480px tall) */
-@media (max-height: 540px) {
-  .osk-key { height: 40px; font-size: 18px; }
-  .osk-row { margin: 3px 0; }
-  .osk-keys[data-mode="num"] .osk-key { height: 46px; font-size: 22px; }
-}
-.osk-key:active { background: rgba(255, 255, 255, .34); transform: translateY(1px); }
+.osk-key:active { background: rgba(255, 255, 255, .36); transform: translateY(1px); }
 .osk-key.on { background: var(--accent, #0a84ff); }
-.osk-key.wide { flex: 1.5 1 0; background: rgba(255, 255, 255, .08); font-size: 17px; }
+.osk-key.wide { flex: 1.5 1 0; background: rgba(255, 255, 255, .08); font-size: 16px; }
 .osk-key.space { flex: 5 1 0; background: rgba(255, 255, 255, .1); }
 .osk-spacer { flex: 1 1 0; background: transparent; box-shadow: none; pointer-events: none; }
-/* number pad: bigger keys, fewer per row */
-.osk-keys[data-mode="num"] { max-width: 360px; margin: 0 auto; }
-.osk-keys[data-mode="num"] .osk-key { height: 60px; font-size: 26px; }
+.osk-keys[data-mode="num"] { max-width: 360px; margin: 0 auto; width: 100%; }
+.osk-keys[data-mode="num"] .osk-key { height: 52px; font-size: 24px; }
 
-/* lift the onboarding card up so its fields sit above the keyboard while typing */
-body.osk-open .onb { place-items: start center; padding-top: 60px; }
+/* keep the whole keyboard on-screen on the short 7" panel (480px tall) */
+@media (max-height: 540px) {
+  .osk-key { height: 38px; font-size: 18px; }
+  .osk-row { margin: 3px 0; }
+  .osk-bar { min-height: 40px; }
+  .osk-bar-val { font-size: 18px; }
+  .osk-keys[data-mode="num"] .osk-key { height: 44px; font-size: 21px; }
+}

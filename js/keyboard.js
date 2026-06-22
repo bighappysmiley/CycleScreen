@@ -50,6 +50,7 @@ const OSK = (() => {
         <span class="osk-bar-label" id="osk-bar-label"></span>
         <span class="osk-bar-val" id="osk-bar-val"></span>
         <button class="osk-bar-eye" id="osk-eye" hidden type="button">show</button>
+        <button class="osk-bar-hide" id="osk-hide" type="button">Done</button>
       </div>
       <div class="osk-keys" id="osk-keys"></div>`;
     document.body.appendChild(host);
@@ -57,6 +58,7 @@ const OSK = (() => {
     barLabel = host.querySelector('#osk-bar-label');
     barVal = host.querySelector('#osk-bar-val');
     keysWrap = host.querySelector('#osk-keys');
+    host.querySelector('#osk-hide').addEventListener('pointerdown', (e) => { e.preventDefault(); close(); });
     host.querySelector('#osk-eye').addEventListener('pointerdown', (e) => {
       e.preventDefault(); showPass = !showPass; host.querySelector('#osk-eye').textContent = showPass ? 'hide' : 'show'; syncBar();
     });

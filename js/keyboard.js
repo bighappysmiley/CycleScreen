@@ -8,7 +8,7 @@
  */
 const OSK = (() => {
   let host, bar, barLabel, barVal, keysWrap;
-  let target = null, mode = 'alpha', shift = false, showPass = false;
+  let target = null, mode = 'alpha', shift = false, showPass = false, caret = 0;
 
   const TEXT_TYPES = ['text', 'search', 'email', 'url', 'tel', 'password', 'number', ''];
 
@@ -95,27 +95,31 @@ const OSK = (() => {
     insert(ch);
   }
 
+  // Caret position — tracked ourselves so a tap on a key (which can momentarily
+  // blur the field) never makes selectionStart read 0 and reverse the text.
+  function range() {
+    if (document.activeElement === target && target.selectionStart != null) return [target.selectionStart, target.selectionEnd];
+    const p = Math.min(caret, (target.value || '').length); return [p, p];
+  }
+  function setCaret(p) {
+    caret = p;
+    try { target.focus({ preventScroll: true }); target.setSelectionRange(p, p); } catch (e) {}
+  }
   function insert(s) {
     const el = target, max = el.maxLength;
-    if (el.selectionStart != null) {
-      const a = el.selectionStart, b = el.selectionEnd;
-      let next = el.value.slice(0, a) + s + el.value.slice(b);
-      if (max > 0 && next.length > max) next = next.slice(0, max);
-      el.value = next;
-      const p = Math.min(a + s.length, el.value.length); el.setSelectionRange(p, p);
-    } else {
-      let next = el.value + s; if (max > 0 && next.length > max) next = next.slice(0, max); el.value = next;
-    }
+    let [a, b] = range();
+    let next = el.value.slice(0, a) + s + el.value.slice(b);
+    if (max > 0 && next.length > max) { next = next.slice(0, max); }
+    el.value = next;
+    setCaret(Math.min(a + s.length, el.value.length));
     fire();
   }
   function backspace() {
     const el = target;
-    if (el.selectionStart != null) {
-      let a = el.selectionStart, b = el.selectionEnd;
-      if (a === b) { if (a === 0) return; el.value = el.value.slice(0, a - 1) + el.value.slice(b); a--; }
-      else el.value = el.value.slice(0, a) + el.value.slice(b);
-      el.setSelectionRange(a, a);
-    } else el.value = el.value.slice(0, -1);
+    let [a, b] = range();
+    if (a === b) { if (a === 0) return; el.value = el.value.slice(0, a - 1) + el.value.slice(b); a--; }
+    else el.value = el.value.slice(0, a) + el.value.slice(b);
+    setCaret(a);
     fire();
   }
   function enter() {
@@ -145,14 +149,20 @@ const OSK = (() => {
     if (isPass && !showPass) v = '•'.repeat(v.length);
     barLabel.textContent = target.getAttribute('aria-label') || target.placeholder || '';
     barVal.textContent = v;
-    barVal.dir = /[֐-׿؀-ۿ]/.test(target.value) ? 'rtl' : 'ltr';
+    barVal.dir = 'auto';
   }
 
   function open(el) {
     if (!host) build();
+    if (target === el && host.classList.contains('show')) return; // already open for this field
     target = el;
-    showPass = false; shift = el.type === 'password' ? false : false;
+    showPass = false; shift = false;
     mode = isNumeric(el) ? 'num' : 'alpha';
+    // force LTR editing even under an RTL (Arabic/Hebrew) document so Latin
+    // usernames/passwords don't type backwards; dir=auto flips for RTL content.
+    el.setAttribute('dir', 'auto');
+    caret = el.selectionStart != null ? el.selectionStart : (el.value || '').length;
+    el.onclick = () => { if (el.selectionStart != null) caret = el.selectionStart; };
     render(); syncBar();
     document.body.classList.add('osk-open');
     host.classList.add('show');

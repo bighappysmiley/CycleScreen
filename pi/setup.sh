@@ -76,6 +76,7 @@ mkdir -p "\$PROFILE/Default"
   "\$PROFILE/Default/Preferences"
 unclutter -idle 0.5 -root &
 exec chromium-browser --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble \\
+  --test-type --no-first-run --no-default-browser-check --password-store=basic \\
   --app=$KIOSK_URL \\
   --user-data-dir="\$PROFILE" \\
   --autoplay-policy=no-user-gesture-required \\

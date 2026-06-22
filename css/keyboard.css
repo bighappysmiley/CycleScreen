@@ -2,15 +2,17 @@
 .osk {
   position: fixed; left: 0; right: 0; bottom: 0;
   z-index: 100000;
+  box-sizing: border-box; max-height: 64vh; overflow: hidden;
   transform: translateY(110%);
   transition: transform .22s cubic-bezier(.4, 0, .2, 1);
   background: rgba(28, 28, 30, .96);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  padding: 5px 5px calc(5px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -8px 30px rgba(0, 0, 0, .45);
   user-select: none; -webkit-user-select: none;
 }
+.osk, .osk * { box-sizing: border-box; }
 .osk.show { transform: translateY(0); }
 
 /* the magnified field, pinned to the very top of the screen while typing */
@@ -37,15 +39,21 @@
 .osk-bar-eye { flex: 0 0 auto; background: rgba(255, 255, 255, .12); color: #fff; border: 0;
   border-radius: 8px; padding: 6px 12px; font-size: 13px; }
 
-.osk-row { display: flex; gap: 6px; justify-content: center; margin: 5px 0; }
+.osk-row { display: flex; gap: 5px; justify-content: center; margin: 4px 0; }
 .osk-key {
-  flex: 1 1 0; min-width: 0; height: 52px;
-  border: 0; border-radius: 9px;
+  flex: 1 1 0; min-width: 0; height: 46px;
+  border: 0; border-radius: 8px;
   background: rgba(255, 255, 255, .14); color: #fff;
-  font-size: 21px; font-weight: 500;
+  font-size: 20px; font-weight: 500;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 1px 0 rgba(0, 0, 0, .35);
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+/* keep the whole keyboard on-screen on the short 7" panel (480px tall) */
+@media (max-height: 540px) {
+  .osk-key { height: 40px; font-size: 18px; }
+  .osk-row { margin: 3px 0; }
+  .osk-keys[data-mode="num"] .osk-key { height: 46px; font-size: 22px; }
 }
 .osk-key:active { background: rgba(255, 255, 255, .34); transform: translateY(1px); }
 .osk-key.on { background: var(--accent, #0a84ff); }
